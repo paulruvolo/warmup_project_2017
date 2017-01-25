@@ -10,7 +10,7 @@ class Square():
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.last_action_time = rospy.get_time()
         self.state = "forward"
-        self.forward_dur = 2
+        self.forward_dur = 3.333
         self.turn_dur = 1.5
 
     def act(self):
@@ -30,8 +30,8 @@ class Square():
             else:
                 twist_msg.angular.z = 1
         self.pub.publish(twist_msg)
-            
-        
+
+
 
 if (__name__=="__main__"):
     square = Square()
