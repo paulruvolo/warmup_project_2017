@@ -11,7 +11,7 @@ class Square():
         self.last_action_time = rospy.get_time()
         self.state = "forward"
         self.forward_dur = 3.333
-        self.turn_dur = 1.5
+        self.turn_dur = 1.57
 
     def act(self):
         twist_msg = Twist()
