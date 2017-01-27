@@ -14,13 +14,19 @@ class DriveSquare(object):
 		rospy.Subscriber('/odom', Odometry, self.process_odom)
 		self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
-		self.angle_proportional_constant = 1
+		self.angle_k = 1
+		self.position_k = 1
+		self.drive_angle_k = 1
 
 		self.position = Point()
 		self.goal_position = Point()
+		self.position_error = None
 		self.angle = -10
 		self.goal_angle = 0.0
 		self.angle_error = None
+
+		self.at_goal_angle = False
+		self.at_point = False
 	
 
 	def process_odom(self, msg):
@@ -56,53 +62,93 @@ class DriveSquare(object):
 
 	def find_angle_twist(self):
 		twist = Twist()
-		turn_command = self.angle_error * self.angle_proportional_constant
+		turn_command = self.angle_error * self.angle_k
 		print "turn command: " + str(turn_command)
 		twist.angular.z = turn_command
 		return twist
 
+	def calculate_position_error(self):
+		delta_x = self.goal_position.x - self.position.x
+		delta_y = self.goal_position.y - self.position.y
+		self.position_error = math.sqrt((delta_x)**2 + (delta_y)**2)
+		self.goal_angle = math.atan2(delta_y, delta_x)
+		self.angle_error = -self.angle_diff(self.angle,self.goal_angle)
+		if math.fabs(self.position_error) < 0.05:
+			return True
+		else:
+			return False
 
-	def run(self):
+
+	def find_position_twist(self):
+		twist = Twist()
+		drive_command = self.position_error * self.position_k
+		turn_command = self.angle_error * self.drive_angle_k
+		twist.linear.x = drive_command
+		twist.angular.z = turn_command
+		return twist
+
+	def turn_in_place(self):
+		self.at_goal_angle = self.calculate_angle_error()
+		if self.at_goal_angle:
+			self.stop()
+		else:
+			twist = self.find_angle_twist()
+			self.pub.publish(twist)
+
+	def drive_to_point(self):
+		self.at_point = self.calculate_position_error()
+		if self.at_point:
+			self.stop()
+		else:
+			twist = self.find_position_twist()
+			self.pub.publish(twist)
+
+	def stop(self):
+		twist = Twist()
+		self.pub.publish(twist)
+
+
+	def run_angle(self, goal):
 		r = rospy.Rate(10)
-		at_goal_angle = False
-		self.goal_angle = 1*math.pi/2
+		self.goal_angle = goal
 
-		while not rospy.is_shutdown():
-			#define sqaure points based on pose
-			#define angles to turn to after each point
-			#for point,angle in goals
-			#	set point as goal 
-			#	while not at_position_goal
-			#		#calculate error 
-			#		#update twist
-			#		#publish
-			#		r.sleep()
-			#	while not at_angle_goal
-			#		#calculate error
-			#		#update twist
-			#		#publish
-			#		r.sleep()
-			#stop
-			#publish stop
-			#celebrate!
-
-			if not at_goal_angle:
-				at_goal_angle = self.calculate_angle_error()
-				if at_goal_angle:
-					twist = Twist()
-					twist.angular.z = 0
-				else:
-					twist = self.find_angle_twist()
-				self.pub.publish(twist)
+		while not rospy.is_shutdown():	
+			if not self.at_goal_angle:
+				self.turn_in_place()	
 			else:
 				break
 			r.sleep()
-		print "Done!"
+		self.at_goal_angle = False
+		print "Reached Angle!"
+
+	def run_point(self, goal_x, goal_y):
+		r = rospy.Rate(10)
+		goal_point = Point()
+		goal_point.x = goal_x
+		goal_point.y = goal_y
+		self.goal_position = goal_point
+
+		while not rospy.is_shutdown():	
+			if not self.at_point:
+				self.drive_to_point()	
+			else:
+				break
+			r.sleep()
+		self.at_point = False
+		print "Reached Point!"
 
 			
 
 if __name__ == '__main__':
+	side = 1
 	node = DriveSquare()
-	node.run()
-
+	node.run_angle(0*math.pi/2)
+	node.run_point(side,0)
+	node.run_angle(1*math.pi/2)
+	node.run_point(side,side)
+	node.run_angle(2*math.pi/2)
+	node.run_point(0,side)
+	node.run_angle(3*math.pi/2)
+	node.run_point(0,0)
+	print("Finished instructions.")
 
