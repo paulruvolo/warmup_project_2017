@@ -15,7 +15,7 @@ if (__name__=="__main__"):
     marker = Marker()
     marker.pose.position.x = 1
     marker.pose.position.y = 2
-    marker.header.frame_id = "base_link"
+    marker.header.frame_id = "base_laser_link"
     marker.scale.x = 1
     marker.scale.y = 1
     marker.scale.z = 1
