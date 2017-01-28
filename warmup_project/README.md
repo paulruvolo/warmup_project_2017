@@ -1,3 +1,3 @@
 # Warmup project for CompRobo
-_Eric_Miller_
+_Eric Miller_
 
