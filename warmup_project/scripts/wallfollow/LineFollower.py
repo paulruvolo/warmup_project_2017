@@ -17,6 +17,7 @@ from geometry_msgs.msg import PointStamped, Vector3
 rospy.init_node('line_follower')
 
 listener = tf.TransformListener()
+broadcaster = tf.TransformBroadcaster()
 
 goal_dist = rospy.get_param('~wall_offset', default=1.0)
 speed = rospy.get_param('~speed', default=.5)
@@ -45,19 +46,27 @@ class LineFollower(object):
         assert len(msg.points) == 2
 
         for i, pt in enumerate(msg.points):
-            localpoint = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
-            self.points[i] = [localpoint.point.x, localpoint.point.y]
+            local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
+            self.points[i] = [local_point.point.x, local_point.point.y]
 
     def run(self):
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
             r.sleep()
 
+            if self.points[0] == self.points[1]:
+                continue
+
             dist = self.get_dist_from_wall()
             angle = self.get_angle_from_wall()
 
             dist_error = dist - goal_dist
             desired_angle = dist_error * kpDist
+
+            # broadcaster.sendTransform((0, 0, 0),
+            #                           tf.transformations.quaternion_from_euler(0,0,desired_angle),
+            #                           rospy.Time.now(), 'base_link', 'desired_heading')
+
             angle_error = angle - desired_angle
 
             turn_speed = angle_error * kpAngle
