@@ -5,7 +5,7 @@ import rospy
 from visualization_msgs.msg import Marker
 
 marker = Marker()
-marker.header.frame_id = "/neck"
+marker.header.frame_id = "/odom"
 marker.type = marker.SPHERE
 marker.action = marker.ADD
 marker.scale.x = 1
