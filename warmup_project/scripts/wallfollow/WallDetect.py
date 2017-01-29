@@ -14,9 +14,9 @@ def laser_to_cart(scan):
 	laser_points = []
 	angle = scan.angle_min
 	for point in scan.ranges:
-		#convert to cartesian in here
+		# convert to cartesian in here
 		
-		laser_points.append(Point(x,y,0.0))
+		laser_points.append(Point(x, y, 0.0))
 
 	publish_line(laser_points)
 

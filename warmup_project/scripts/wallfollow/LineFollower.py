@@ -1,7 +1,15 @@
 #! /usr/bin/env python
+"""
+This node listens to incomming messages on the /detect channel.
+Those messages must be of type visualization_msgs/Marker with
+type == LINE_STRIP and two points. These points are interpreted
+as a directed infinite line the robot is intended to follow, with
+constant lateral offset of (by default) 1m.
+"""
 import math
 
-import rospy, tf
+import rospy
+import tf
 from geometry_msgs.msg import Twist
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import PointStamped, Vector3
@@ -10,21 +18,23 @@ rospy.init_node('line_follower')
 
 listener = tf.TransformListener()
 
-goal_dist = rospy.get_param('wall_offset', default=1.0)
-speed = rospy.get_param('speed', default=.5)
+goal_dist = rospy.get_param('~wall_offset', default=1.0)
+speed = rospy.get_param('~speed', default=.5)
 
 # Radians to bias angle per meter of offset angle
-kpDist = rospy.get_param('speed', default=1.0)
+kpDist = rospy.get_param('~kpDist', default=1.0)
 
 # Radians/sec to turn per radian of angle error
-kpAngle = rospy.get_param('speed', default=1.0)
+kpAngle = rospy.get_param('~kpAngle', default=1.0)
+
+subTopic = rospy.get_param('~topic', '/detect')
 
 
 class LineFollower(object):
     def __init__(self):
         super(LineFollower, self).__init__()
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.sub = rospy.Subscriber('/detect', Marker, self.on_detect)
+        self.sub = rospy.Subscriber(subTopic, Marker, self.on_detect)
         self.points = [[0, 0], [0, 0]]
 
     def on_detect(self, msg):
@@ -66,7 +76,7 @@ class LineFollower(object):
         # taken from https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
         ps = self.points
 
-        return abs(ps[1][0] * ps[0][1] - ps[1][1] * ps[0][0]) / \
+        return ps[1][0] * ps[0][1] - ps[1][1] * ps[0][0] / \
                math.sqrt((ps[0][1] - ps[1][1]) ** 2 + (ps[0][0] - ps[1][0]) ** 2)
 
     def get_angle_from_wall(self):
