@@ -26,12 +26,14 @@ class Control_Robot():
         self.linearVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.sendMessage()
+
+        # get key interupt things
         self.settings = termios.tcgetattr(sys.stdin)
         self.key = None
 
 
     def getKey(self):
-        """ Interupt (I think) that get a noninturupting keypress """
+        """ Interupt (I think) that get a non interrupting keypress """
         tty.setraw(sys.stdin.fileno())
         select.select([sys.stdin], [], [], 0)
         self.key = sys.stdin.read(1)
