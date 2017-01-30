@@ -8,6 +8,7 @@ constant lateral offset of (by default) 1m.
 """
 import math
 
+import numpy
 import rospy
 import tf
 from geometry_msgs.msg import Twist
@@ -30,7 +31,6 @@ kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
 subTopic = rospy.get_param('~topic', '/detect')
 
-
 class LineFollower(object):
     def __init__(self):
         super(LineFollower, self).__init__()
@@ -46,6 +46,7 @@ class LineFollower(object):
         assert len(msg.points) == 2
 
         for i, pt in enumerate(msg.points):
+            transformPoint(pt, msg.header)
             local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
             self.points[i] = [local_point.point.x, local_point.point.y]
 

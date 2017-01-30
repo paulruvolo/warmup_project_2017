@@ -15,7 +15,7 @@ pub = rospy.Publisher('/detect', Marker, queue_size=10, latch=True)
 
 def publish_line(laser_points):
     marker_message = Marker(id=0, type=Marker.LINE_STRIP,
-        header=Header(stamp=rospy.Time.now() - rospy.Duration(secs = 0.1), frame_id='odom'),
+        header=Header(stamp=rospy.Time.now() - rospy.Duration(secs=2), frame_id='odom'),
         pose=Pose(position=Point(0.0,0.0,0.0)), scale=Vector3(.1, .1, .1),
         color=ColorRGBA(g=1, a=1),
         points=laser_points)

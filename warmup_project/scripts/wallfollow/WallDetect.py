@@ -20,7 +20,7 @@ def laser_to_cart(scan):
             laser_points.append(Point(x, y, 0.0))
 
     index = int(len(laser_points) * nthile)
-    publish_line([laser_points[index], laser_points[-index]])
+    publish_line(scan.header, [laser_points[index], laser_points[-index]])
     print len(laser_points)
 
 rospy.init_node('wall_detect')
@@ -28,9 +28,9 @@ pub = rospy.Publisher('/detect', Marker, queue_size=10)
 sub = rospy.Subscriber('/stable_scan', LaserScan, laser_to_cart)
 #sub = rospy.Subscriber('/funrobo/laser/scan', LaserScan, laser_to_cart)
 
-def publish_line(line_points):
+def publish_line(header, line_points):
     marker_message = Marker(id=0, type=Marker.LINE_STRIP,
-        header=Header(stamp=rospy.Time.now(), frame_id='base_laser_link'),
+        header=header,
         pose=Pose(position=Point(0.0,0.0,0.0)), scale=Vector3(0.1,0.1,0.1),
         color = ColorRGBA(g=1,a=1), points=line_points)
     pub.publish(marker_message)
