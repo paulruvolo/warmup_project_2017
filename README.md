@@ -1,5 +1,6 @@
 # Warmup Project 2017
 Riley Chapman and Bonnie Ishiguro
+
 Computational Robotics, Olin College of Engineering 
 
 ## Teleop
@@ -22,6 +23,11 @@ The robot controller switches between these two modes to alternate between turni
 
 
 ## Wall Following
+Goal: Drive the robot parallel to any wall detected by its LIDAR scanner
+
+To detect an existing wall, we read from two separate directions from the LIDAR scanner, 45 degrees apart.  We calculate the angle of the wall relative to the robot using the distances between these detected wall points and the robot.  The angular velocity is proportionally controlled by the difference between the orientation of the robot and the orientation of the wall.  This results in the robot orienting itself parallel to the wall.  We set a constant linear velocity so that it the robot will drive forward while orienting itself in this fashion.  To handle dropped scanner data, we only update the distance values from the LIDAR scanner when they are non-zero.
+
+The major challenges of this part of the project included determining how to calculate the relative angle of the wall based on the distances returned from the LIDAR scanner.
 
 ## Person Following
 coming soon
