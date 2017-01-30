@@ -1,2 +1,17 @@
 # warmup_project_2017
-This is the base repo for the warmup project assignment in CompRobo, spring 2017.
+Riley Chapman and Bonnie Ishiguro
+
+## Teleop
+
+## Driving in a Square
+
+## Wall Following
+
+## Person Following
+coming soon
+
+## Obstacle Avoidance
+coming soon
+
+## Finite State Control
+coming soon
