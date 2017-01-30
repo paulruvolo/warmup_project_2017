@@ -6,10 +6,6 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Vector3, Pose, Point
 from std_msgs.msg import Header, ColorRGBA
 
-rospy.init_node('wall_detect')
-pub = rospy.Publisher('/detect', Marker, queue_size=10)
-sub = rospy.Subscriber('/stable_scan', LaserScan, laser_to_cart)
-
 def laser_to_cart(scan):
 	laser_points = []
 	angle = scan.angle_min
