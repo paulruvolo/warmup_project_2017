@@ -23,8 +23,8 @@ def publish_line(laser_points):
     pub.publish(marker_message)
 
 # Happy and go straight
-point1 = Point(x=0, y=1)
-point2 = Point(x=5, y=1)
+point1 = Point(x=0, y=-1.5)
+point2 = Point(x=5, y=-1.5)
 
 
 r = rospy.Rate(100)
