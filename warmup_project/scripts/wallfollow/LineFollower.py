@@ -20,10 +20,10 @@ listener = tf.TransformListener()
 broadcaster = tf.TransformBroadcaster()
 
 goal_dist = rospy.get_param('~wall_offset', default=1.0)
-speed = rospy.get_param('~speed', default=.5)
+speed = rospy.get_param('~speed', default=.2)
 
 # Radians to bias angle per meter of offset angle
-kpDist = rospy.get_param('~kpDist', default=1.0)
+kpDist = rospy.get_param('~kpDist', default=1.5)
 
 # Radians/sec to turn per radian of angle error
 kpAngle = rospy.get_param('~kpAngle', default=1.0)
@@ -63,9 +63,9 @@ class LineFollower(object):
             dist_error = dist - goal_dist
             desired_angle = dist_error * kpDist
 
-            # broadcaster.sendTransform((0, 0, 0),
-            #                           tf.transformations.quaternion_from_euler(0,0,desired_angle),
-            #                           rospy.Time.now(), 'base_link', 'desired_heading')
+            broadcaster.sendTransform((0, 0, 0),
+                                      tf.transformations.quaternion_from_euler(0, 0, desired_angle),
+                                      rospy.Time.now(), 'desired_heading', 'base_link')
 
             angle_error = angle - desired_angle
 
@@ -75,7 +75,7 @@ class LineFollower(object):
 
             self.pub.publish(msg)
 
-            print self.points, dist, angle
+            print  dist, angle
 
     def get_dist_from_wall(self):
         """
@@ -85,7 +85,7 @@ class LineFollower(object):
         # taken from https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
         ps = self.points
 
-        return ps[1][0] * ps[0][1] - ps[1][1] * ps[0][0] / \
+        return (ps[1][1] * ps[0][0] - ps[1][0] * ps[0][1]) / \
                math.sqrt((ps[0][1] - ps[1][1]) ** 2 + (ps[0][0] - ps[1][0]) ** 2)
 
     def get_angle_from_wall(self):
