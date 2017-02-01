@@ -7,6 +7,7 @@ from sensor_msgs.msg import LaserScan
 import rospy
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 class Wall_Detector():
 
@@ -24,19 +25,22 @@ class Wall_Detector():
         for ang, dist in enumerate(msg.ranges):
             if dist == 0.0:
                 continue
-            x = dist * np.cos(ang)
-            y = dist * np.sin(ang)
+            x = dist * np.cos(ang * np.pi / 180)
+            y = dist * np.sin(ang * np.pi / 180)
             try:
                 pts = np.append(pts, [[x,y]], axis=0)
             except:
                 pts = np.asarray([[x,y]])
 
+        plt.scatter(pts[:,0],pts[:,1])
+        plt.show()
+
         np.random.shuffle(pts)
         a = pts[0]
         b = pts[1]
+        print(b-a)
 
         errors = []
-        vecs = []
 
         for c in pts[2:]:
             ab = b-a
@@ -47,6 +51,7 @@ class Wall_Detector():
 
         print(errors)
         print(max(errors))
+        print(np.mean(errors))
         print(sum(errors))
 
 
