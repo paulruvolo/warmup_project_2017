@@ -24,7 +24,7 @@ class Wall_Detector():
     def laserCallback(self, msg):
         print("laserCallback")
 
-        for ang, dist in enumerate(msg.ranges):
+        for ang, dist in enumerate(msg.ranges[0:360]):
             if dist == 0.0:
                 continue
             x = dist * np.cos(ang * np.pi / 180)
@@ -35,39 +35,39 @@ class Wall_Detector():
                 pts = np.asarray([[x,y]])
 
 
+        rSquared = 0.0
+        maxRSquared = .95
 
-        idxs = sorted(random.sample(range(pts.shape[0]), 2))
+        while rSquared < maxRSquared:
+            maxRSquared -= .01
 
-        a = pts[idxs[0]]
-        b = pts[idxs[1]]
+            idxs = sorted(random.sample(range(pts.shape[0]), 2))
 
-        errorPts = np.asarray([x[1] for x in enumerate(pts) if x[0] not in idxs])
+            a = pts[idxs[0]]
+            b = pts[idxs[1]]
 
-        errors = []
-        for c in errorPts:
-            ab = b-a
-            ac = c-a
-            ang = np.arccos(np.dot(ab, ac) / (np.linalg.norm(ab) * np.linalg.norm(ac)))
-            dist = np.linalg.norm(ac) * np.sin(ang)
-            errors.append([c, dist**2])
+            errorPts = np.asarray([x[1] for x in enumerate(pts) if x[0] not in idxs])
 
-        x = []
-        y = []
-        for pt, dist in errors:
-            if dist < .1:
-                x.append(pt[0])
-                y.append(pt[1])
+            errors = []
+            for c in errorPts:
+                ab = b-a
+                ac = c-a
+                ang = np.arccos(np.dot(ab, ac) / (np.linalg.norm(ab) * np.linalg.norm(ac)))
+                dist = np.linalg.norm(ac) * np.sin(ang)
+                errors.append([c, dist**2])
 
-        rSquared = (stats.linregress(x, y).rvalue)**2
-        print("wall r^2", rSquared)
+            wallPts = [pt[0] for pt in errors if pt[1] < .1]
+            print("wall pts: ", wallPts[0], wallPts[-1])
+            print("pts in wall: ", len(wallPts))
 
-        wallPts = [pt[0] for pt in errors if pt[1] < .1]
-        print("wall pts: ", wallPts[0], wallPts[-1])
-        print("pts in wall: ", len(wallPts))
+            rSquared = (stats.linregress(np.transpose(np.asarray(wallPts))).rvalue)**2
+            print("wall r^2", rSquared)
 
         plt.scatter(pts[:,0],pts[:,1],color='blue')
         xy = np.transpose(np.asarray([list(a), list(b)]))
         plt.scatter(xy[0], xy[1],color='red')
+        endPts = np.transpose(np.concatenate((wallPts[0], wallPts[-1])).reshape((2,2)))
+        plt.scatter(endPts[0], endPts[1], color='yellow')
         plt.show()
 
     def run(self):
