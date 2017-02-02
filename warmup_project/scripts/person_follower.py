@@ -17,19 +17,21 @@ class FollowPerson(object):
 		self.pub_cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=20)
 		self.pub_filtered_points = rospy.Publisher('/filtered_points', Marker, queue_size= 10)
 		self.pub_cluster = rospy.Publisher('/cluster', Marker, queue_size= 10)
-		self.scan_width = 25
+		self.scan_width = 30
 		self.scan_points = np.zeros((1,2)) #np.zeros((self.scan_width*2,2))
-		self.too_far = 2.2 #meters, ignore objects beyond this distance
+		self.too_far = 4.0 #meters, ignore objects beyond this distance
 		self.kmeans = None
 		self.person_present = False
 		self.closest_cluster = None
 
-		self.angle_k = 1.2
+		self.angle_k = 1.5
 		self.distance_k = 0.7
-		self.goal_distance = 0.7
+		self.goal_distance = 1.2
 		self.goal_point = Point()
 		self.distance_error = None
 		self.angle_error = None
+
+		self.num_clusters = 5
 
 	def process_scan(self, msg):
 		points = np.zeros((self.scan_width*2,2))
@@ -49,8 +51,8 @@ class FollowPerson(object):
 		return [x,y]
 
 	def compute_kmeans(self):
-		if len(self.scan_points) > 1:
-			self.kmeans = KMeans(n_clusters=2, random_state=0).fit(self.scan_points)
+		if len(self.scan_points) >= self.num_clusters:
+			self.kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(self.scan_points)
 			self.person_present = True
 		else:
 			self.kmeans = None
@@ -140,7 +142,7 @@ class FollowPerson(object):
 		return points
 
 	def run(self):
-		r = rospy.Rate(10)
+		r = rospy.Rate(20)
 		while not rospy.is_shutdown():
 			self.show_points()
 			self.compute_kmeans()
