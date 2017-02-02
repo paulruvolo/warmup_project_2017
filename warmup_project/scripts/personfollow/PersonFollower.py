@@ -20,9 +20,9 @@ kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
 subTopic = rospy.get_param('~topic', '/person')
 
-class LineFollower(object):
+class PersonFollower(object):
     def __init__(self):
-        super(LineFollower, self).__init__()
+        super(PersonFollower, self).__init__()
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber(subTopic, PointStamped, self.on_detect)
         self.point = (0,0)
@@ -38,9 +38,6 @@ class LineFollower(object):
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
             r.sleep()
-
-            if self.points[0] == self.points[1]:
-                continue
 
             dist = self.get_dist_from_person()
             angle = self.get_angle_from_person()
@@ -67,19 +64,14 @@ class LineFollower(object):
         Returns the perpendicular distance of the robot from the wall, in meters.
         :return:
         """
-        # taken from https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
-        ps = self.points
-
-        return (ps[1][1] * ps[0][0] - ps[1][0] * ps[0][1]) / \
-               math.sqrt((ps[0][1] - ps[1][1]) ** 2 + (ps[0][0] - ps[1][0]) ** 2)
+        return math.sqrt(self.point[0]**2 + self.point[1]**2)
 
     def get_angle_from_person(self):
         """
         Returns the angle from the wall in radians, with positive indicating the robot is going towards the wall (assuming wall to right)
         """
-        ps = self.points
-        return math.atan2(ps[1][1] - ps[0][1], ps[1][0] - ps[0][0])
+        return math.atan2(self.point[0], self.point[1])
 
 
 if __name__ == '__main__':
-    LineFollower().run()
+    PersonFollower().run()
