@@ -3,6 +3,7 @@
 import rospy
 import tf
 import math
+import time
 
 from sensor_msgs.msg import LaserScan, PointCloud
 from visualization_msgs.msg import Marker
@@ -32,10 +33,12 @@ rospy.init_node('person_finder')
 
 listener = tf.TransformListener()
 
-minDist = rospy.get_param('min_dist', 0.1)
+minDist = rospy.get_param('min_dist', 0.3)
 maxDist = rospy.get_param('max_dist', 2.0)
 boxWidth = rospy.get_param('box_width', 2.0)
 
+time.sleep(1)
+print('Starting')
 
 class PersonFinder(object):
     def __init__(self):
@@ -44,15 +47,30 @@ class PersonFinder(object):
         self.pubVis = rospy.Publisher('/person_visualisation', Marker, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, self.scan_callback)
         self.header = Header()
+        self.publish_box()
+
+    def publish_box(self):
+        points = [Point(x=x, y=y) for x in (minDist, maxDist) for y in (-boxWidth/2, boxWidth/2)]
+        self.pubVis.publish(
+            Marker(
+                header=Header(frame_id='base_link', stamp=rospy.Time.now()),
+                id=1,
+                type=Marker.SPHERE_LIST,
+                scale=Vector3(0.1, 0.1, 0.1),
+                color=ColorRGBA(r=1, g=1, b=1, a=.8),
+                points=points
+            ))
 
     def publish_point(self, point):
-        newheader = Header(stamp=self.header.stamp, frame_id='base_link')
-        self.pubPoint.publish(PointStamped(header=newheader, point=point))
+        new_header = Header(stamp=self.header.stamp, frame_id='base_link')
+        self.pubPoint.publish(PointStamped(header=new_header, point=point))
         self.pubVis.publish(Marker(id=0, type=Marker.SPHERE,
-                                   header=newheader,
+                                   header=new_header,
                                    pose=Pose(position=point),
                                    scale=Vector3(0.1, 0.1, 0.1),
                                    color=ColorRGBA(g=1, a=1)))
+
+        self.publish_box()
 
     def filter_points(self, points):
         points = [p for p in points if (minDist <= p.x <= maxDist and abs(p.y) <= boxWidth / 2)]
