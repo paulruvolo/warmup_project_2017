@@ -46,7 +46,6 @@ class LineFollower(object):
         assert len(msg.points) == 2
 
         for i, pt in enumerate(msg.points):
-            transformPoint(pt, msg.header)
             local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
             self.points[i] = [local_point.point.x, local_point.point.y]
 

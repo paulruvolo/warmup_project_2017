@@ -48,7 +48,7 @@ class PersonFinder(object):
                                    pose=Pose(position=point, scale=Vector3(0.1, 0.1, 0.1)),
                                    color=ColorRGBA(g=1, a=1)))
 
-    def filter_points(self, points):
+    def filter_points(points):
         points = [p for p in points if (minDist <= p.x <= maxDist and abs(p.y) <= boxWidth / 2)]
         return points
 
