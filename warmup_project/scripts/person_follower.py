@@ -14,9 +14,9 @@ class FollowPerson(object):
 	def __init__(self):
 		rospy.init_node('person_follow')
 		rospy.Subscriber('/stable_scan', LaserScan, self.process_scan)
-		self.pub_cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-		self.pub_filtered_points = rospy.Publisher('/filtered_points', Marker, queue_size= 5)
-		self.pub_cluster = rospy.Publisher('/cluster', Marker, queue_size= 5)
+		self.pub_cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=20)
+		self.pub_filtered_points = rospy.Publisher('/filtered_points', Marker, queue_size= 10)
+		self.pub_cluster = rospy.Publisher('/cluster', Marker, queue_size= 10)
 		self.scan_width = 25
 		self.scan_points = np.zeros((1,2)) #np.zeros((self.scan_width*2,2))
 		self.too_far = 2.2 #meters, ignore objects beyond this distance
