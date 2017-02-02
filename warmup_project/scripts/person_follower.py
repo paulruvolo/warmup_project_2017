@@ -24,6 +24,13 @@ class FollowPerson(object):
 		self.person_present = False
 		self.closest_cluster = None
 
+		self.angle_k = 1
+		self.distance_k = 1
+		self.goal_distance = 0.5
+		self.goal_point = Point()
+		self.distance_error = None
+		self.angle_error = None
+
 	def process_scan(self, msg):
 		points = np.zeros((self.scan_width*2,2))
 		for i in range(0, self.scan_width):
@@ -51,8 +58,8 @@ class FollowPerson(object):
 
 	def show_cluster(self):
 		if self.person_present:
-			x = self.closest_cluster[0]
-			y = self.closest_cluster[1]
+			x = self.closest_cluster[0][0]
+			y = self.closest_cluster[0][1]
 
 			marker_msg = Marker()
 			marker_msg.type = marker_msg.SPHERE
@@ -83,7 +90,25 @@ class FollowPerson(object):
 				distance = math.sqrt(x**2 + y**2)
 				if distance < closest[1]:
 					closest = (cluster, distance)
-			self.closest_cluster = closest[0]
+			self.closest_cluster = closest
+			self.goal_point.x = closest[0][0]
+			self.goal_point.y = closest[0][1]
+
+
+	def drive_to_person(self):
+		# figure out how far away person is and angle to person
+		self.distance_error = self.closest_cluster[1] - self.goal_distance
+		self.angle_error = math.atan2(self.goal_point.y, self.goal_point.x)
+
+		twist = Twist()
+		drive_command = self.distance_error * self.distance_k
+		turn_command = self.angle_error * self.angle_k
+		twist.linear.x = drive_command
+		twist.angular.z = turn_command
+		self.pub_cmd_vel.publish(twist)
+
+		print "Distance error: " + str(self.distance_error) + ", Angle error: " + str(self.angle_error) + ", Drive command: " + str(drive_command) + ", Turn command: " + str(turn_command)
+
 
 	def show_points(self):
 		marker_msg = Marker()
@@ -117,6 +142,7 @@ class FollowPerson(object):
 			self.compute_kmeans()
 			self.find_closest_cluster()
 			self.show_cluster()
+			self.drive_to_person()
 			r.sleep()
 
 
