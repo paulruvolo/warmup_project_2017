@@ -18,7 +18,7 @@ kpDist = rospy.get_param('~kpDist', default=1.5)
 # Radians/sec to turn per radian of angle error
 kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
-subTopic = rospy.get_param('~topic', '/detect')
+subTopic = rospy.get_param('~topic', '/person')
 
 class LineFollower(object):
     def __init__(self):
@@ -31,7 +31,6 @@ class LineFollower(object):
         """
         :type msg: PointStamped
         """
-        transformPoint(msg.point, msg.header)
         local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
         self.point = (local_point.point.x, local_point.point.y)
 
