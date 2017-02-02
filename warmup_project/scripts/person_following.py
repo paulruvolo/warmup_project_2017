@@ -20,33 +20,21 @@ class Person_Follower():
         self.angles.extend(range(345,360))
         self.centroid = None
 
-
-
     def processScans(self, msg):
         for i in self.angles:
-            if msg.ranges[i] < 3:
-                self.feet_scans.append((i, msg.ranges[i]))
+            if msg.ranges[i] > 0.0 and msg.ranges[i] < 3.0:
+                if i > 180:
+                    self.feet_scans.append((i-360, msg.ranges[i]))
+                else:
+                    self.feet_scans.append((i, msg.ranges[i]))
         self.centroid = (float(sum([item(0) for item in self.feet_scans]))/len(self.feet_scans), float(sum([item(1) for item in self.feet_scans]))/len(self.feet_scans))
 
-
     def act(self):
-
-        #TODO
-        
         twist_msg = Twist()
-
-
-        if self.front_reading == 0 or self.back_reading == 0:
-            twist_msg.linear.x = .05
-        elif self.current_error:
-            point1 = Point(x=-math.cos(math.radians(300))*self.front_reading, y=-math.sin(math.radians(300))*self.front_reading)
-            point2 = Point(x=-math.cos(math.radians(240))*self.back_reading, y=-math.sin(math.radians(240))*self.back_reading)
-            self.marker.points = [point1, point2]
-            self.mark.publish(self.marker)
-
-            error = self.front_reading - self.target_distance
-            twist_msg.linear.x = .2
-            twist_msg.angular.z += -self.current_error*self.k - error*self.k
+        lin_error = self.centroid(1)*math.cos(math.radians(self.centroid(0))) - self.target_distance
+        ang_error = self.target_angle - self.centroid(0)
+        twist_msg.linear.x = self.k * lin_error
+        twist_msg.angular.z = self.k * ang_error
 
         self.pub.publish(twist_msg)
 
