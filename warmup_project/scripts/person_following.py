@@ -16,17 +16,17 @@ class Person_Follower():
 
         self.mark = rospy.Publisher('/visualization_marker', Marker, queue_size=10)
 
-
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, self.processScans, queue_size=10)
         self.current_error = None
         self.target_distance = rospy.get_param('~target_distance',1)
         self.target_angle = 0
-        self.k = rospy.get_param('~k', .5)
+        self.k_lin = rospy.get_param('~k_lin', .5)
+        self.k_ang = rospy.get_param('~k_ang', .5)
         self.raw_feet_scans = []
         self.filtered_feet_scans = []
-        self.angles = range(15)
-        self.angles.extend(range(345,360))
+        self.angles = range(30)
+        self.angles.extend(range(330,360))
         self.centroid = None
 
         self.max_scans = 8
@@ -46,8 +46,10 @@ class Person_Follower():
         self.marker.color.r = 0
         self.marker.color.g = 1
         self.marker.color.b = 1
+
     def processScans(self, msg):
-        self.feet_scans = []
+        self.raw_feet_scans = []
+        self.filtered_feet_scans = []
         for i in self.angles:
             if msg.ranges[i] > 0.0 and msg.ranges[i] < 3.0:
                 if i > 180:
@@ -55,9 +57,8 @@ class Person_Follower():
                 else:
                     self.raw_feet_scans.append((i, msg.ranges[i]))
 
-
-        past_x = self.centroid[1] * math.cos(math.radians(self.centroid[0]))
-        past_y = self.centroid[1] * math.sin(math.radians(self.centroid[0]))
+        past_x = self.past_centroid[1] * math.cos(math.radians(self.past_centroid[0]))
+        past_y = self.past_centroid[1] * math.sin(math.radians(self.past_centroid[0]))
 
         for point in self.raw_feet_scans:
             current_x = point[1] * math.cos(math.radians(point[0]))
@@ -68,7 +69,6 @@ class Person_Follower():
 
         if len(self.filtered_feet_scans) > self.max_scans:
             self.filtered_feet_scans = self.filtered_feet_scans[:self.max_scans]
-
 
         self.centroid = (np.mean([item[0] for item in self.filtered_feet_scans]), np.mean([item[1] for item in self.filtered_feet_scans]))
 
@@ -88,8 +88,8 @@ class Person_Follower():
         if self.centroid:
             lin_error = self.centroid[1]*math.cos(math.radians(self.centroid[0])) - self.target_distance
             ang_error = self.target_angle - self.centroid[0]
-            twist_msg.linear.x = self.k * lin_error
-            twist_msg.angular.z = -self.k * math.radians(ang_error)
+            twist_msg.linear.x = self.k_lin * lin_error
+            twist_msg.angular.z = -self.k_ang * math.radians(ang_error)
 
         self.pub.publish(twist_msg)
 
