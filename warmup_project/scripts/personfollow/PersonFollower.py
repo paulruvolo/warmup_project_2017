@@ -9,7 +9,7 @@ rospy.init_node('line_follower')
 listener = tf.TransformListener()
 broadcaster = tf.TransformBroadcaster()
 
-goal_dist = rospy.get_param('~wall_offset', default=1.0)
+goal_dist = rospy.get_param('~person_offset', default=1.0)
 speed = rospy.get_param('~speed', default=.2)
 
 # Radians to bias angle per meter of offset angle
@@ -18,7 +18,7 @@ kpDist = rospy.get_param('~kpDist', default=1.5)
 # Radians/sec to turn per radian of angle error
 kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
-subTopic = rospy.get_param('~topic', '/detect')
+subTopic = rospy.get_param('~topic', '/person')
 
 class PersonFollower(object):
     def __init__(self):
@@ -53,7 +53,7 @@ class PersonFollower(object):
             angle_error = angle - desired_angle
 
             turn_speed = angle_error * kpAngle
-
+            
             msg = Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_speed))
 
             self.pub.publish(msg)
