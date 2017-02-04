@@ -38,6 +38,7 @@ class Wall_Detector():
         self.marker = Marker()
         self.marker.header.frame_id = "/odom"
         self.marker.type = self.marker.LINE_STRIP
+        self.marker.header = ''
         self.marker.action = 0
         self.marker.scale.x = 0.02
         self.marker.color.a = 1.0
@@ -50,7 +51,11 @@ class Wall_Detector():
 
     def laserMsgToPts(self, msg):
         """ Uses self.ms to generate a list of points """
+
+        self.marker.header = msg.header
+
         for ang, dist in enumerate(msg.ranges[0:360]):
+            ang = ang + 180
             if dist == 0.0:
                 continue
             x = dist * np.cos(ang * np.pi / 180)
@@ -84,7 +89,7 @@ class Wall_Detector():
 
     def getWallPoints(self, errors):
         """ Returns the points of the wall given list of errors """
-        wallPts = [pt[0] for pt in errors if pt[1] < .1]
+        wallPts = [pt[0] for pt in errors if pt[1] < .05]
         return (wallPts)
 
 
@@ -113,10 +118,12 @@ class Wall_Detector():
         pts = self.laserMsgToPts(msg)
 
         rSquared = 0.0
-        maxRSquared = .95
+        minRSquared = .95
+        n = 0
 
-        while rSquared < maxRSquared:
-            maxRSquared -= .025
+        while rSquared < minRSquared:
+            n += 1
+            minRSquared -= .025 * n
 
             errors = self.getDistErrors(pts)
             wallPts = self.getWallPoints(errors)
@@ -134,11 +141,12 @@ class Wall_Detector():
             self.end_point.y   = endPt2[1]
             self.publishMarker()
 
-        plt.scatter(pts[:,0],pts[:,1],color='blue')
-        plt.scatter(self.xy[0], self.xy[1],color='red')
-        endPts = np.transpose(np.concatenate((endPt1, endPt2)).reshape((2,2)))
-        plt.scatter(endPts[0], endPts[1], color='yellow')
-        plt.show()
+        # plt.scatter(pts[:,0],pts[:,1],color='blue')
+        # plt.scatter(self.xy[0], self.xy[1],color='red')
+        # endPts = np.transpose(np.concatenate((endPt1, endPt2)).reshape((2,2)))
+        # plt.scatter(endPts[0], endPts[1], color='yellow')
+        # plt.show()
+        # plt.pause(.001)
 
 
     def publishMarker(self):
