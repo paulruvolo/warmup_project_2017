@@ -89,7 +89,7 @@ class Wall_Detector():
 
     def getWallPoints(self, errors):
         """ Returns the points of the wall given list of errors """
-        wallPts = [pt[0] for pt in errors if pt[1] < .05]
+        wallPts = [pt[0] for pt in errors if pt[1] < .01]
         return (wallPts)
 
 
@@ -119,19 +119,21 @@ class Wall_Detector():
 
         rSquared = 0.0
         minRSquared = .95
-        n = 0
+        n = 5
+        numWallPts = 0
 
-        while rSquared < minRSquared:
-            n += 1
-            minRSquared -= .025 * n
+        while numWallPts < 15 and n > 0:
+            n -= 1
 
             errors = self.getDistErrors(pts)
             wallPts = self.getWallPoints(errors)
             endPt1, endPt2 = self.getEndPoints(wallPts)
             rSquared = self.getRSquared(wallPts)
 
+            numWallPts = len(wallPts)
+
             print("wall pts: ", endPt1, endPt2)
-            print("pts in wall: ", len(wallPts))
+            print("pts in wall: ", numWallPts)
             print("wall r^2", rSquared)
 
         if rSquared > .90:
@@ -141,12 +143,12 @@ class Wall_Detector():
             self.end_point.y   = endPt2[1]
             self.publishMarker()
 
-        # plt.scatter(pts[:,0],pts[:,1],color='blue')
-        # plt.scatter(self.xy[0], self.xy[1],color='red')
-        # endPts = np.transpose(np.concatenate((endPt1, endPt2)).reshape((2,2)))
-        # plt.scatter(endPts[0], endPts[1], color='yellow')
-        # plt.show()
-        # plt.pause(.001)
+        plt.scatter(pts[:,0],pts[:,1],color='blue')
+        plt.scatter(self.xy[0], self.xy[1],color='red')
+        endPts = np.transpose(np.concatenate((endPt1, endPt2)).reshape((2,2)))
+        plt.scatter(endPts[0], endPts[1], color='yellow')
+        plt.show()
+        plt.pause(.001)
 
 
     def publishMarker(self):
