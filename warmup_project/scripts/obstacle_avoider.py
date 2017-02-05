@@ -4,7 +4,9 @@
 
 import rospy
 import math
-from geometry_msgs.msg import Twist, Point
+import tf
+from std_msgs.msg import Header
+from geometry_msgs.msg import Twist, Point, PointStamped
 from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker
 
@@ -14,11 +16,13 @@ class AvoidObstacle(object):
 		rospy.Subscriber('/stable_scan', LaserScan, self.process_scan)
 		self.pub_cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=20)
 		self.pub_filtered_points = rospy.Publisher('/filtered_points', Marker, queue_size= 10)
+		self.tf_listener = tf.TransformListener()
+
 		self.obstacle_distance = 1.2
 		self.scan_points = []
-		self.propel_force = (20,0) #cartesian, in base_link
+		self.goal_point = PointStamped(point = Point(x=20, y=0), header = Header(frame_id="odom") )
+		self.propel_force = (20,0) #cartesian, in odom
 		self.total_force = (0,0) #polar, in base_link (rho, phi)
-
 		self.angle_k = 0.7
 		self.linear_k = 0.01
 
@@ -41,7 +45,14 @@ class AvoidObstacle(object):
 	    return(rho, phi)
 
 	def sum_force(self):
-		total_force = self.propel_force
+		#(trans,rot) = self.tf_listener.lookupTransform('odom', 'base_link', rospy.Time(0))
+		try:
+			transformed_goal_point = self.tf_listener.transformPoint('/base_link', self.goal_point)
+			self.propel_force = (transformed_goal_point.point.x, transformed_goal_point.point.y)
+			total_force = self.propel_force
+		except:
+			total_force = (0,0)
+		
 		for point in self.scan_points:
 			point_force = self.cylin_to_cart(point[0],-2/point[1]) # angle, -1/distance
 			#sum the x and y components of the force
@@ -57,7 +68,7 @@ class AvoidObstacle(object):
 		drive_command = self.total_force[0] * self.linear_k
 		turn_command = self.total_force[1] * self.angle_k
 
-		print "Drive command: " + str(drive_command) + ", Turn command: " + str(turn_command)
+		print "Drive command: " + str(drive_command) + ", Turn command: " + str(turn_command) + ", Propel Force: " + str(self.propel_force)
 
 		twist.linear.x = drive_command
 		twist.angular.z = turn_command
