@@ -20,18 +20,23 @@ kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
 subTopic = rospy.get_param('~topic', '/person')
 
+timeout = rospy.get_param('~timeout', 2.0)
+
+
 class PersonFollower(object):
     def __init__(self):
         super(PersonFollower, self).__init__()
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber(subTopic, PointStamped, self.on_detect)
-        self.point = (0,0)
+        self.point = (0, 0)
+        self.lastMessageTime = rospy.Time.from_seconds(0)
 
     def on_detect(self, msg):
         """
         :type msg: PointStamped
         """
-        local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
+        local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=msg.point))
+        self.lastMessageTime = local_point.header.stamp
         self.point = (local_point.point.x, local_point.point.y)
 
     def run(self):
@@ -39,38 +44,52 @@ class PersonFollower(object):
         while not rospy.is_shutdown():
             r.sleep()
 
-            dist = self.get_dist_from_person()
-            angle = self.get_angle_from_person()
+            if rospy.Time.now() - self.lastMessageTime < rospy.Duration.from_sec(timeout):
+                # We have recent data
 
-            dist_error = dist - goal_dist
-            desired_angle = dist_error * kpDist
+                dist = self.get_dist_from_person()
+                angle = self.get_angle_from_person()
 
-            broadcaster.sendTransform((0, 0, 0),
-                                      tf.transformations.quaternion_from_euler(0, 0, desired_angle),
-                                      rospy.Time.now(), 'desired_heading', 'base_link')
+                dist_error = dist - goal_dist
+                desired_angle = 0
 
-            angle_error = angle - desired_angle
+                # broadcaster.sendTransform((0, 0, 0),
+                #                           tf.transformations.quaternion_from_euler(0, 0, desired_angle),
+                #                           rospy.Time.now(), 'desired_heading', 'base_link')
 
-            turn_speed = angle_error * kpAngle
-            
-            msg = Twist(linear=Vector3(x=speed), angular=Vector3(z=turn_speed))
+                angle_error = angle - desired_angle
 
-            self.pub.publish(msg)
+                if abs(angle_error) > 0.5:
+                    forward_speed = speed / 3.0
+                else:
+                    forward_speed = speed
 
-            print  dist, angle
+                turn_speed = angle_error * kpAngle
+
+                msg = Twist(linear=Vector3(x=forward_speed), angular=Vector3(z=turn_speed))
+
+                self.pub.publish(msg)
+
+            else:
+                # All of our data is really old, stop the robot
+                print "No data"
+                self.pub.publish(Twist())
+
+
+            # print dist, angle
 
     def get_dist_from_person(self):
         """
         Returns the perpendicular distance of the robot from the wall, in meters.
         :return:
         """
-        return math.sqrt(self.point[0]**2 + self.point[1]**2)
+        return math.sqrt(self.point[0] ** 2 + self.point[1] ** 2)
 
     def get_angle_from_person(self):
         """
         Returns the angle from the wall in radians, with positive indicating the robot is going towards the wall (assuming wall to right)
         """
-        return math.atan2(self.point[0], self.point[1])
+        return math.atan2(self.point[1], self.point[0])
 
 
 if __name__ == '__main__':
