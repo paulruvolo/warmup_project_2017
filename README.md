@@ -20,9 +20,9 @@ For teleoperation, our code uses OOP structure with a main Teleop class with an 
 
 **Challenges:**
 
-It is difficult to make clean-looking teleoperation code that has many possible inputs (key presses from the user) and has many possible outputs (robot motions). A behvior that needs to check for so many possible states often becomes cluttered with unintuitive if-else statements, which we sort of fell trap to in this task.
+It is difficult to make clean-looking teleoperation code that has many possible inputs (key presses from the user) and has many possible outputs (robot motions). A behvior that needs to check for so many possible states often becomes cluttered with unintuitive if-else statements, which is a problem that we encountered when completeing this task.
 
-**Possible improvements:**
+**Possible improvement:**
 
 One improvement to this teleoperation code would be to make the key input only last for as long as the key is pressed. Currently, when you let go of the forward button, the robot still goes forward until the next command is given. We could change that such that when you let go of the forward button, the robot stops moving.
 
@@ -72,7 +72,7 @@ Our code uses OOP structure with a main Wall_Follower class with an init method 
 
 Our wall following relies solely on lidar input, but there are often obstacles along the wall that do not scan very well with lidar, such as some black materials of various textures. This makes calculating an accurate wall position very difficult. Another challenge that we dealth with was creating a proportional controller that received two inputs (angle to the wall and distance to the wall) and tuned one output (angular velocity). We eventually created an equation to appropriately balance the two inputs to put into our p-controller.
 
-**Possible improvements:**
+**Possible improvement:**
 
 While our wall following program works incredibly well, we could always add additional functionality to it. One possiblity is to give the wall follower a time-dependent distance to follow the wall at as opposed to a static distance. The robot could be given a sine function and it would trace the curve as if the wall were the x-axis on a graph.
 
@@ -100,7 +100,7 @@ Our Code used a PersonFollower object which held the ROS node, the publishers, a
 
 Our greatest challenge was figuring out how to distinguish feet from another object. Since we’re only using the Laser Scan as our primary sensor, we had to come up with a clever way to make it figure out that a specific cluster of points was the feet, and then in the next set of scans, when the feet have moved and the data points are different, that the Neato still knows that the moved cluster is still the feet. We solved this using the closest centroid solution described above.
 
-**Possible improvements:**
+**Possible improvement:**
 
 Our biggest flaw in our code was that the person must move slowly for the robot to follow them. Since we use the closest points, if the person moves too drastically such that the person’s feet were no longer the closest points to the previous centroid, and say, a wall was nearby, it’s highly possible that the Neato will begin to follow the wall. And unfortunately, it seems that our parameters made it such that rate at which a person could walk for the Neato to continue following him was slower than a normal walking pace. Steps for improvement include doing some more fine-tuning on the parameters in our code, which could potentially make the Neato move faster and be more responsive to changes in the centroid such that the difference between the previous feet scans and the next were still in a valid range. We could also look at adding in the camera and using that as a secondary sensor to check the position of the feet, or we could explore different ways of using the Laser Scans, such as projecting the scans into the Odom frame and then looking for motion that is unique to the feet.
 
@@ -127,7 +127,7 @@ Our Code used a ObstacleAvoider object which held the ROS node, the publishers, 
 
 Our  greatest challenge was mainly finding the goal point vector in the stretch goal. We managed to derive the correct approach, but by the time we did, it had already been 3 hours, and we realized that we would need another 3-5 hours before this one module was finished. So we decided to switch to the simpler approach to save time. The simpler approach didn’t have many problems, but it would’ve been cooler had we more time to work on the more robust method.
 
-**Possible improvements:**
+**Possible improvement:**
 
 The simpler approach’s greatest flaw is that it really only works when there are things right in front of it that it must sidestep. The code logic is a bit more hardcoded, so it only avoids obstacles under certain conditions. For example, if the Neato encountered a corner of a wall, there’s a high probability that it just turn into the corner. In addition, the simpler approach just has the Neato blindly moving forward without any sort of goal, makes it less complete in a sense.
 The most logical step to improve would just be to implement our derivation of the potential fields method. It would’ve been possible if we had a couple more days, and we checked with other teams and confirmed that our theoretical solution was correct. It was really just a matter of time.
@@ -155,7 +155,7 @@ Our Code used a FiniteStateMachine object which held the ROS node, the publisher
 
 Our greatest challenge was balancing the detection between person_follow and driving_square. Often times during testing the Neato would be driving a square and then just detect a table leg or a wall, which meant that we needed to reduce the range of detection. However, if we reduced it too much, then during person following, the person being followed could only move in small baby steps very slowly because the range of the Neato was too small to detect a more comfortable walking pace. There was a lot of fine tuning that went into figuring out how to balance these two issues and ensure smooth state transitions.
 
-**Possible improvements:**
+**Possible improvement:**
 
 Our greatest flaw was that changing of states was based solely on whether something was detected in the Neato field of vision, which meant that anything that went into the range of person_follow detection would trigger a change of state. In that sense our detection for state change was a little tenuous and delicate. In addition, while logical for a FSM pair, the driving square module is a little hard coded, so sometimes when switching back from person following, the Neato will just driving a square into a wall because it lost sense of its orientation. Steps to improve include using a more robust behavior instead of driving square or making driving square a bit more smart such it knew it orientation and wouldn’t crash into stuff after leaving person_following. At the same time more work could be done to make the detection of feet more robust, such that the Neato can continue to drive squares and detect objects as long as the objects aren’t feet. This could be done using motion detection in the Odom frame, or using a camera and sensor fusion.
 
