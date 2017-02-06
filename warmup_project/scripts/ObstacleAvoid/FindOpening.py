@@ -35,8 +35,8 @@ rospy.init_node('obstacle_avoider')
 listener = tf.TransformListener()
 
 obstaclePower = rospy.get_param('~obstacle_power', .1)
-obstacleDistThresh = rospy.get_param('~obstacle_dist_thresh', .3)  # meters
-obstacleScalingExp = rospy.get_param('~obstacle_scaling_exp', 5)
+obstacleDistThresh = rospy.get_param('~obstacle_dist_thresh', .6)  # meters
+obstacleScalingExp = rospy.get_param('~obstacle_scaling_exp', 2)
 
 goalPower = rospy.get_param('~goal_power', 1)
 

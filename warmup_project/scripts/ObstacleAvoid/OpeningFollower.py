@@ -13,6 +13,7 @@ rospy.init_node('line_follower')
 listener = tf.TransformListener()
 broadcaster = tf.TransformBroadcaster()
 
+goal_dist = rospy.get_param('~person_offset', default=1.0)
 speed = rospy.get_param('~speed', default=.2)
 
 # Radians to bias angle per meter of offset angle
