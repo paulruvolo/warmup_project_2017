@@ -34,7 +34,7 @@ class Control_Robot():
         self.state = {'i':self.forward, ',':self.backward,
                       'l':self.rightTurn, 'j':self.leftTurn,
                       'k':self.stop,'n':self.personfollowing,
-                      'b':self.clearPathFollowing,'v':self.multistate}
+                      'b':self.clearPathFollowing,'v':self.combinedcontrol}
         self.acceptablekeys = ['i','l','k',',','j','n','b','v']
         self.linearVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
@@ -96,33 +96,30 @@ class Control_Robot():
     def personfollowing(self):
         """Runs personfollowing"""
         print('personfollowing\r')
-        while not rospy.is_shutdown() and self.key != '\x03' and self.key != 'k':
-                print self.personx
-                print self.persony
-                self.goto_point(self.personx,self.persony)
-                self.sendMessage()
+        print self.personx
+        print self.persony
+        self.goto_point(self.personx,self.persony)
+        self.sendMessage()
 
     def clearPathFollowing(self):
         """Runs personfollowing"""
         print('clearpathfollowing\r')
-        while not rospy.is_shutdown() and self.key != '\x03' and self.key != 'k':
-                print self.clearx
-                print self.cleary
-                self.goto_point(self.clearx,self.cleary)
-                self.sendMessage()
-
-    def multistate(self):
+        print self.clearx
+        print self.cleary
+        self.goto_point(self.clearx,self.cleary)
+        self.sendMessage()
+        
+    def combinedcontrol(self):
         """Personfollows if person is further than half a meter away, otherwise avoids obstacles"""
-        print('multistate\r')
-        while not rospy.is_shutdown() and self.key != '\x03' and self.key != 'k':
-            persondistance = math.sqrt((self.currentx-self.personx)**2 + (self.currenty-self.persony)**2)
-            if persondistance <= .5:
-                self.goto_point(self.clearx,self.cleary)
-                print 'avoiding\r'
-            else:
-                self.goto_point(self.personx,self.persony)
-                print 'following\r'
-            self.sendMessage()
+        print('conbinedcontrol\r')
+        persondistance = math.sqrt((self.currentx-self.personx)**2 + (self.currenty-self.persony)**2)
+        if persondistance <= .5:
+            self.goto_point(self.clearx,self.cleary)
+            print 'avoiding\r'
+        else:
+            self.goto_point(self.personx,self.persony)
+            print 'following\r'
+        self.sendMessage()
 
     def stop(self):
         """ Sets the velocity to stop """
@@ -210,8 +207,7 @@ class Control_Robot():
 
     def run(self):
         
-        while self.key != '\x03' and not rospy.is_shutdown():
-            
+        while self.key != '\x03' and not rospy.is_shutdown(): 
             if self.key in self.acceptablekeys:
                 #if an acceptable keypress, do the action
                 self.state[self.key].__call__()
@@ -219,6 +215,7 @@ class Control_Robot():
                 # on any other keypress, stop the robot
                 self.state['k'].__call__()
             self.sendMessage()
+        self.sleepy.sleep()
 
 control = Control_Robot()
 control.run()
