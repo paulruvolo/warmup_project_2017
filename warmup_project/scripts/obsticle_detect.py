@@ -115,19 +115,28 @@ class Obstacle_Detector():
 
         vectors = []
         for targetx, targety in cluster_centers:
-            dist = -1.0 / np.linalg.norm([targetx-self.currentx, targety-self.currenty])
+            dist = -1.0 / (np.linalg.norm([targetx-self.currentx, targety-self.currenty])**2)
             self.targetangle = math.atan2(targety-self.currenty,targetx-self.currentx)
             self.angledifference  = self.angle_diff(self.targetangle,self.orientation)
+            print self.angledifference
             vector = [dist * math.cos(self.angledifference),
                       dist * math.sin(self.angledifference)]
             vectors.append(vector)
 
         newVector = np.sum(np.asarray(vectors), axis=0)
-        newVector = newVector / np.linalg.norm(newVector)
-        print newVector
+        newVector = [newVector[0] / np.linalg.norm(newVector), newVector[1] / np.linalg.norm(newVector)]
+
+        rot = np.asarray([[np.cos(self.orientation), -1 * np.sin(self.orientation)], [np.sin(self.orientation), np.cos(self.orientation)]])
+        newVector =  np.dot(rot,np.asarray(newVector))
+
+        newVector = [newVector[0] + self.currentx, newVector[1] + self.currenty]
+
 
         #
         # print(smallestDistancePt)
+
+
+
 
         self.point.x, self.point.y = newVector
         self.point_pub.publish(self.point)
@@ -138,12 +147,12 @@ class Obstacle_Detector():
         self.marker.pose.position.z = self.point.z
         self.marker_pub.publish(self.marker)
 
-        # labels_unique = np.unique(labels)
-        # n_clusters_ = len(labels_unique)
-        #
-        #
-        # print("number of estimated clusters : %d" % n_clusters_)
-        #
+        labels_unique = np.unique(labels)
+        n_clusters_ = len(labels_unique)
+
+
+        print("number of estimated clusters : %d" % n_clusters_)
+
         # plt.figure(1)
         # plt.clf()
         #
@@ -154,6 +163,7 @@ class Obstacle_Detector():
         #     plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
         #     plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
         #              markeredgecolor='k', markersize=14)
+        # plt.scatter(newVector[0], newVector[1], s=1000)
         # plt.title('Estimated number of clusters: %d' % n_clusters_)
         # plt.show()
 
