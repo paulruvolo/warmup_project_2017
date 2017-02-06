@@ -41,6 +41,7 @@ The Neato should autonomously trace the perimeter of a 1m x 1m square.
 
 One of the largest considerations when solving this problem is determining how to tell when the Neato has turned far enough for a 90° angle and when the Neato has moved far enough for a 1m side. If we assumed the Neato was moving at a constant velocity (which we managed by operating the Neato at a very low speed), then we could control precise angular and linear displacement by controlling how long the Neato moves. We decided that using odometry data from the encoders in the Neato’s wheels would be more difficult to implement and not much more effective over the short time frame of making a single square. Our code architecture resembled an FSM where the input was the current state of the robot, the current time, and the time since an action was last taken. Depending on these inputs the robot either moved forward or turned.
 
+![drive_square](images/drive_square.jpg?raw=true "Drive Square")
 
 **Code architecture:**
 
@@ -68,6 +69,7 @@ When starting from a position near a wall, the Neato should be able to navigate 
 
 We split this problem into two separate challenges: orient parallel to the wall and move to a target distance away from the wall. The Neato is parallel to the wall if two lidar readings, of equal angle relative to the Neato’s 270° mark, are equal in magnitude. We chose the readings at 240° and 300°, and used proportional control to attempt to make the difference between those two readings equal zero. We used a similar proportional controller to optimize a distance reading to the wall minus our set target distance to zero. We kept a live visualization of where the robot sensed the wall was at all times in order to more easily debug the behavior of our code. The position of the wall was calculated by drawing a line between our 240° and 300° measurements.
 
+![wall_following](images/wall_following.jpg?raw=true "Wall Follow")
 
 **Code architecture:**
 
@@ -147,6 +149,8 @@ The key takeaway is that it’s good to know your own limitations and your own g
 
 
 ## Finite State Control
+
+![fsm_diagram](images/fsm_diagram.png?raw=true "FSM Diagram")
 
 **The problem:**
 
