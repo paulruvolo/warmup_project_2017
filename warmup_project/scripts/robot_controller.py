@@ -2,7 +2,7 @@
 import rospy
 from sensor_msgs.msg import LaserScan
 from neato_node.msg import Bump
-from geometry_msgs.msg import PoseWithCovariance,TwistWithCovariance,Twist,Vector3
+from geometry_msgs.msg import PoseWithCovariance,TwistWithCovariance,Twist,Vector3,Point
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 import select
@@ -23,10 +23,12 @@ class Control_Robot():
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sleepy = rospy.Rate(2)
         rospy.Subscriber("/odom",Odometry,self.process_odom)
+        rospy.Subscriber("/personpoint",Point,self.process_person)
+
         # make dictionary that calls functions for teleop 
         self.state = {'i':self.forward, ',':self.backward,
                       'l':self.rightTurn, 'j':self.leftTurn,
-                      'k':self.stop,'n':self.debugbutton}
+                      'k':self.stop,'n':self.personfollowing}
         self.acceptablekeys = ['i','l','k',',','j','n']
         self.linearVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
@@ -41,14 +43,16 @@ class Control_Robot():
         #proportional controller constants
         self.kturn = .6
         self.kspeed= .3
+        #location of person to be followed
+        self.personx = 0.0
+        self.persony = 0.0
 
     def getKey(self):
-        """ Interupt (I think) that get a non interrupting keypress """
+        """ Interupt that gets a non interrupting keypress """
         tty.setraw(sys.stdin.fileno())
         select.select([sys.stdin], [], [], 0)
         self.key = sys.stdin.read(1)
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
-
 
     def forward(self):
         """
@@ -59,20 +63,17 @@ class Control_Robot():
         self.linearVector  = Vector3(x=1.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
 
-
     def backward(self):
         print('backward')
         """ Sets the velocity to backward """
         self.linearVector  = Vector3(x=-1.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
 
-
     def leftTurn(self):
         print('leftTurn')
         """ Sets the velocity to turn left """
         self.linearVector  = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=1.0)
-
 
     def rightTurn(self):
         print('rightTurn')
@@ -82,11 +83,11 @@ class Control_Robot():
         self.linearVector  = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=-1.0)
 
-    def debugbutton(self):
-        """Runs a manual gotpoint for debug"""
-        print('debugbutton')
+    def personfollowing(self):
+        """Runs personfollowing"""
+        print('personfollowing')
         while not rospy.is_shutdown():
-                self.goto_point(0.1,0.1)
+                self.goto_point(personx,persony)
                 self.sendMessage()
 
     def stop(self):
@@ -104,6 +105,11 @@ class Control_Robot():
         print('sendMessage')
         self.pub.publish(Twist(linear=self.linearVector, angular=self.angularVector))
 
+    def process_person(self,msg):
+        """Starts personfollowing on recieved person"""
+        self.personx = msg.x
+        self.persony = msg.y
+
     def process_odom(self,msg):
         orientation_tuple = (msg.pose.pose.orientation.x,
                              msg.pose.pose.orientation.y,
@@ -113,13 +119,6 @@ class Control_Robot():
         self.currentx = msg.pose.pose.position.x 
         self.currenty = msg.pose.pose.position.y
         self.orientation = angles[2]
-
-    def process_wall(self,msg):
-        """on recieving a wall, start wallfollowing"""
-        self.point1 = msg.point1
-        self.point2 = msg.point2
-        
-
 
     def angle_normalize(self,z):
         """ convenience function to map an angle to the range [-pi,pi] """
@@ -144,8 +143,8 @@ class Control_Robot():
         else:
             return self.d2
 
-
     def goto_point(self,targetx,targety):
+        """Drives to specified point, proportionally controlling turnrate and speed"""
         self.targetdistance = math.sqrt((self.currentx-targetx)**2 + (self.currenty-targety)**2)
         self.targetangle = math.atan2(targety-self.currenty,targetx-self.currentx)
         self.angledifference  = self.angle_diff(self.targetangle,self.orientation)
@@ -158,13 +157,13 @@ class Control_Robot():
             self.speed = 0
         self.linearVector = Vector3(x=self.speed, y=0.0, z=0.0)
         self.angularVector = Vector3(x = 0.0, y = 0.0, z = self.turnspeed)
-        print "currentx = " + str(self.currentx)
-        print "currenty = " + str(self.currenty)
-        print "orientation = " + str(self.orientation)
-        print "targetangle = " + str(self.targetangle)
-        print "angledifference = " + str(self.angledifference)
-        print "turnspeed = " + str(self.turnspeed)
-        print "speed = " + str(self.speed)
+        # print "currentx = " + str(self.currentx)
+        # print "currenty = " + str(self.currenty)
+        # print "orientation = " + str(self.orientation)
+        # print "targetangle = " + str(self.targetangle)
+        # print "angledifference = " + str(self.angledifference)
+        # print "turnspeed = " + str(self.turnspeed)
+        # print "speed = " + str(self.speed)
 
     def run(self):
         rospy.on_shutdown(self.stop)
