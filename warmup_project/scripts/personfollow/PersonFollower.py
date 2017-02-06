@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
-import rospy, tf, numpy, math
+import rospy, tf, math
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PointStamped, Vector3
+
+# from warmup_project.frames import modernizePoint
 
 rospy.init_node('line_follower')
 
@@ -36,6 +38,7 @@ class PersonFollower(object):
         :type msg: PointStamped
         """
         local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=msg.point))
+        # local_point = modernizePoint(listener, local_point, 'odom')
         self.lastMessageTime = local_point.header.stamp
         self.point = (local_point.point.x, local_point.point.y)
 
@@ -58,6 +61,7 @@ class PersonFollower(object):
                 #                           rospy.Time.now(), 'desired_heading', 'base_link')
 
                 angle_error = angle - desired_angle
+                print angle_error
 
                 if abs(angle_error) > 0.5:
                     forward_speed = speed / 3.0
