@@ -29,6 +29,8 @@ To detect an existing wall, we read from two separate directions from the LIDAR 
 
 The major challenges of this part of the project included determining how to calculate the relative angle of the wall based on the distances returned from the LIDAR scanner.
 
+![image](screenshots/wall_follow.png)
+
 ## Person Following
 Goal: Identify a nearby object likely to be a person, orient toward it, and drive to a specified distance away from it. 
 
@@ -38,7 +40,9 @@ Once we have determined the location of our goal, angular velocity is controlled
 
 We found it useful to visualize the filtered points as well as the closest cluster while developing this behavior. These were published as markers to be visualized by RVIZ. The filtered points take the form of a list of spheres, while the "person" cluster takes the form of a spheroid. 
 
-Our only method of differentiating between objects (i.e. walls, tables, garbage cans) and people is the location of clusters. If a wall is in the field of view, and is closer than a person in the field of view, then the robot will approach the wall. We discovered that if the K-means algorithm does not calculate enough clusters, then the person may be averaged with its surrounding objects. For example, the center of the cluster could be between a person and a nearby wall.   
+Our only method of differentiating between objects (i.e. walls, tables, garbage cans) and people is the location of clusters. If a wall is in the field of view, and is closer than a person in the field of view, then the robot will approach the wall. We discovered that if the K-means algorithm does not calculate enough clusters, then the person may be averaged with its surrounding objects. For example, the center of the cluster could be between a person and a nearby wall.
+
+![image](screenshots/person_follow.png)   
 
 ## Obstacle Avoidance
 Goal: Navigate toward a goal point while avoiding any obstacles in its path.
@@ -53,7 +57,7 @@ The filtered laser scan returns are visualized in RVIZ as a list of spheres. The
 
 One difficult part of this implementation is tuning the relative weight of repulsion and attraction, combined with the function used to weight the magnitude of the repulsive forces based on distance. This form of implementation is not very good at avoiding obstacles that are directly between the robot and its goal point, since the repulsion and attraction directly cancel each other out.  
 
-![image](screenshots/sphere_in_odom.png)
+![image](screenshots/obstacle_aviod.png)
 
 ## Finite State Control
 We implemented a finite state controller that changes between following a person and spinning in circles. Our person follower reports whether it believes it has detected a person or not, so we used this to change between states. If a person is detected, then the robot follows them, otherwise it spins in circles.
