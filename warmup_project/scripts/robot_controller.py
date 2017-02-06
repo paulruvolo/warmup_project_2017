@@ -23,7 +23,7 @@ class Control_Robot():
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sleepy = rospy.Rate(2)
         rospy.Subscriber("/odom",Odometry,self.process_odom)
-        rospy.Subscriber("/personpoint",Point,self.process_person)
+        rospy.Subscriber("/person_point",Point,self.process_person)
 
         # make dictionary that calls functions for teleop 
         self.state = {'i':self.forward, ',':self.backward,
