@@ -89,7 +89,7 @@ class Wall_Detector():
 
     def getWallPoints(self, errors):
         """ Returns the points of the wall given list of errors """
-        wallPts = [pt[0] for pt in errors if pt[1] < .001]
+        wallPts = [pt[0] for pt in errors if pt[1] < .005]
         return (wallPts)
 
 
@@ -122,7 +122,7 @@ class Wall_Detector():
         n = 5
         numWallPts = 0
 
-        while numWallPts < 15 and n > 0:
+        while numWallPts < 30 and n > 0:
             n -= 1
 
             errors = self.getDistErrors(pts)
@@ -134,7 +134,10 @@ class Wall_Detector():
             print("wall pts: ", endPt1, endPt2)
             print("pts in wall: ", numWallPts)
 
-        if numWallPts > 15:
+            if numWallPts > 60:
+                break
+
+        if numWallPts > 30:
             self.start_point.x = endPt1[0]
             self.start_point.y = endPt1[1]
             self.end_point.x   = endPt2[0]
