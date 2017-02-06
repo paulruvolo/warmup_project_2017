@@ -3,13 +3,17 @@
 """ Independent script that will detect and publish walls """
 
 from geometry_msgs.msg import Twist, Vector3, Point
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import PointCloud
 from visualization_msgs.msg import Marker
 import matplotlib.pyplot as plt
 from itertools import cycle
 import rospy
 import tf
+from nav_msgs.msg import Odometry
+import math
 from sklearn.cluster import MeanShift, estimate_bandwidth
+from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
+
 
 import numpy as np
 import random
@@ -20,34 +24,62 @@ class Person_Detection():
 
     def __init__(self):
         rospy.init_node('person_detector')
-        rospy.Subscriber('/stable_scan', LaserScan, self.laserCallback)
+        rospy.Subscriber('/projected_stable_scan', PointCloud, self.laserCallback)
+        rospy.Subscriber("/odom",Odometry,self.process_odom)
 
         self.sleepy = rospy.Rate(5)
 
         self.lastScanPts = []
 
+        #current location and orientation
+        self.currentx = 0.0
+        self.currenty = 0.0
+        self.orientation = 0.0
 
-    def laserMsgToPts(self, msg):
-        """ Uses self.ms to generate a list of points """
+    def process_odom(self,msg):
+        orientation_tuple = (msg.pose.pose.orientation.x,
+                             msg.pose.pose.orientation.y,
+                             msg.pose.pose.orientation.z,
+                            msg.pose.pose.orientation.w)
+        angles = euler_from_quaternion(orientation_tuple)
+        self.currentx = msg.pose.pose.position.x
+        self.currenty = msg.pose.pose.position.y
+        self.orientation = angles[2]
 
 
-        # self.marker.header = msg.header
+    def angle_normalize(self,z):
+        """ convenience function to map an angle to the range [-pi,pi] """
+        return math.atan2(math.sin(z), math.cos(z))
 
-        for ang, dist in enumerate(msg.ranges[0:360]):
-            ang = ang + 180
-            if dist == 0.0:
-                continue
-            x = dist * np.cos(ang * np.pi / 180)
-            y = dist * np.sin(ang * np.pi / 180)
-            try:
-                pts = np.append(pts, [[x,y]], axis=0)
-            except:
-                pts = np.asarray([[x,y]])
-        return (pts)
+
+    def angle_diff(self,a,b):
+        """ Calculates the difference between angle a and angle b (both should be in radians)
+        the difference is always based on the closest rotation from angle a to angle b
+        examples:
+            angle_diff(.1,.2) -> -.1
+            angle_diff(.1, 2*math.pi - .1) -> .2
+            angle_diff(.1, .2+2*math.pi) -> -.1
+        """
+        self.a = self.angle_normalize(a)
+        self.b = self.angle_normalize(b)
+        self.d1 = a-b
+        self.d2 = 2*math.pi - math.fabs(self.d1)
+        if self.d1 > 0:
+            self.d2 *= -1.0
+        if math.fabs(self.d1) < math.fabs(self.d2):
+            return self.d1
+        else:
+            return self.d2
+
 
     def laserCallback(self, msg):
         print("laserCallback")
-        X = self.laserMsgToPts(msg)
+        X = []
+        for pt in msg.points:
+            try:
+                X = np.append(X, [[pt.x,pt.y]], axis=0)
+            except:
+                X = np.asarray([[pt.x,pt.y]])
 
 
         # The following bandwidth can be automatically detected using
@@ -57,8 +89,20 @@ class Person_Detection():
         labels = ms.labels_
         cluster_centers = ms.cluster_centers_
 
+        smallestAngleIndex = 0
+        i = 0
+        smallestAngle = 5
+        for targetx, targety in cluster_centers:
+            self.targetangle = math.atan2(targety-self.currenty,targetx-self.currentx)
+            self.angledifference  = self.angle_diff(self.targetangle,self.orientation)
+            if abs(self.angledifference) < smallestAngle:
+                smallestAngleIndex = i
+                print "angle diff", self.angledifference
+            i += 1
+
         labels_unique = np.unique(labels)
         n_clusters_ = len(labels_unique)
+
 
         print("number of estimated clusters : %d" % n_clusters_)
 
