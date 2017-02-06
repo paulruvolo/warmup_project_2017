@@ -65,7 +65,7 @@ class OpeningFinder(object):
         return obstaclePower / ((dist/obstacleDistThresh) ** obstacleScalingExp)
 
     def publish_dest(self, force, header):
-        self.pubPoint.publish(PointStamped(header=header, point=Point(x=force.x, y=force.y)))
+        self.pubPoint.publish(PointStamped(header=header, point=Point(x=force.x*1000, y=force.y*1000)))
         self.publish_vector(force, header, id=2112, color=ColorRGBA(g=1, a=1))
 
     def publish_vector(self, vect, header, id=0, color=ColorRGBA(g=1, a=1)):
