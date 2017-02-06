@@ -14,6 +14,7 @@ import tty
 import select
 import sys
 import termios
+import thread
 
 class Control_Robot():
 
@@ -110,7 +111,7 @@ class Control_Robot():
     def multistate(self):
         """Personfollows if person is further than half a meter away, otherwise avoids obstacles"""
         while not rospy.is_shutdown():
-            persondistance = math.sqrt((self.currentx-personx)**2 + (self.currenty-persony)**2)
+            persondistance = math.sqrt((self.currentx-self.personx)**2 + (self.currenty-self.persony)**2)
             if persondistance <= .5:
                 self.goto_point(self.clearx,self.cleary)
                 print 'avoiding'
