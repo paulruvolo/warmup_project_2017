@@ -5,6 +5,7 @@ Kevin Zhang and Shane Kelly
 02/06/17
 
 ## Robot Teleoperation
+
 **The problem:**
 
 When not running other programs, the Neato should be able to be repositioned from user key input.
@@ -13,7 +14,20 @@ When not running other programs, the Neato should be able to be repositioned fro
 
 In the style of a finite state machine, depending on the input, a certain output will occur. In this case, the input is the user pressing certain keys and the output is the linear and angular motion of the Neato. We designated the input to output mappings with a series of if statements.
 
+**Code architecture:**
+
+For teleoperation, our code uses OOP structure with a main Teleop class with an init method that initializes member variables, a getKey method that reads in user input, and an act method that maps the user-given key to a state of robot motion. In our code’s main we have a while loop that runs the getKey and act methods on repeat.
+
+**Challenges:**
+
+It is difficult to make clean-looking teleoperation code that has many possible inputs (key presses from the user) and has many possible outputs (robot motions). A behvior that needs to check for so many possible states often becomes cluttered with unintuitive if-else statements, which we sort of fell trap to in this task.
+
+**Possible improvements:**
+
+One improvement to this teleoperation code would be to make the key input only last for as long as the key is pressed. Currently, when you let go of the forward button, the robot still goes forward until the next command is given. We could change that such that when you let go of the forward button, the robot stops moving.
+
 ## Driving in a Square
+
 **The problem:**
 
 The Neato should autonomously trace the perimeter of a 1m x 1m square.
@@ -22,9 +36,26 @@ The Neato should autonomously trace the perimeter of a 1m x 1m square.
 
 One of the largest considerations when solving this problem is determining how to tell when the Neato has turned far enough for a 90° angle and when the Neato has moved far enough for a 1m side. If we assumed the Neato was moving at a constant velocity (which we managed by operating the Neato at a very low speed), then we could control precise angular and linear displacement by controlling how long the Neato moves. We decided that using odometry data from the encoders in the Neato’s wheels would be more difficult to implement and not much more effective over the short time frame of making a single square. Our code architecture resembled an FSM where the input was the current state of the robot, the current time, and the time since an action was last taken. Depending on these inputs the robot either moved forward or turned.
 
+**Code architecture:**
+
+For driving in a square, our code uses OOP structure with a main Square class with an init method that initializes member variables (state variable and speed variables), and an act method that looks at the current state of the robot and the time since an action was last taken in order to push the robot into a new state. In our code’s main we have a while loop that runs the act method on repeat.
+
+**Challenges:**
+
+The most difficult part of this behavior is getting the robot to acurately perfom a 90 degree turn and accurately move 1 meter forward. In order to combat this challenge with our time-based movement, we had the robot move slowly in hopes that there would be minimal drift in the wheels when we gave the robot start and stop commands.
+
+**Possible improvement:**
+
+The biggest improvement that we could make to the drive square behavior would be to use odometry information to perform movements instead of time-based motion. This would make our square more accurate and more repeatable for many repetitions.
+
+**Key takeaways:**
+
+The key takeaway for this task is that time-based procedures are often very error-prone. Using a method of actuation that allows errors to stack is often doomed to fail.
+
 ![drive_square](images/drive_square.jpg?raw=true "Drive Square")
 
 ## Wall Following
+
 **The problem:**
 
 When starting from a position near a wall, the Neato should be able to navigate along the wall at a set distance.
@@ -32,6 +63,22 @@ When starting from a position near a wall, the Neato should be able to navigate 
 **Our solution:**
 
 We split this problem into two separate challenges: orient parallel to the wall and move to a target distance away from the wall. The Neato is parallel to the wall if two lidar readings, of equal angle relative to the Neato’s 270° mark, are equal in magnitude. We chose the readings at 240° and 300°, and used proportional control to attempt to make the difference between those two readings equal zero. We used a similar proportional controller to optimize a distance reading to the wall minus our set target distance to zero. We kept a live visualization of where the robot sensed the wall was at all times in order to more easily debug the behavior of our code. The position of the wall was calculated by drawing a line between our 240° and 300° measurements.
+
+**Code architecture:**
+
+Our code uses OOP structure with a main Wall_Follower class with an init method that initializes member variables (p-controller variables and lidar readings), a processScans method that acts as the lidar subscriber callback, and an act method that applies a p-controller to the angular velocity of the robot based on our lidar readings and publishes linear and angular velocities to the Neato. In our code’s main we have a while loop that runs the act method on repeat.
+
+**Challenges:**
+
+Our wall following relies solely on lidar input, but there are often obstacles along the wall that do not scan very well with lidar, such as some black materials of various textures. This makes calculating an accurate wall position very difficult. Another challenge that we dealth with was creating a proportional controller that received two inputs (angle to the wall and distance to the wall) and tuned one output (angular velocity). We eventually created an equation to appropriately balance the two inputs to put into our p-controller.
+
+**Possible improvements:**
+
+While our wall following program works incredibly well, we could always add additional functionality to it. One possiblity is to give the wall follower a time-dependent distance to follow the wall at as opposed to a static distance. The robot could be given a sine function and it would trace the curve as if the wall were the x-axis on a graph.
+
+**Key takeaways:**
+
+A key takeaway from this task is that using the correct approach can make a very difficult problem almost trivial. Our first attempt at wall following was simply p-controlling a single reading 90 degrees to the right of the robot. This was ineffective and the reading changed unpredictably based on our angular velocity. When we redefined our approach to include comparing two lidar scans to find a parallel path along the wall, then the problem became almost effortlessly solved.
 
 ![wall_following](images/wall_following.jpg?raw=true "Wall Follow")
 
