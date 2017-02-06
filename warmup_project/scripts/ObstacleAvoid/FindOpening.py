@@ -65,13 +65,8 @@ class OpeningFinder(object):
         return obstaclePower / ((dist/obstacleDistThresh) ** obstacleScalingExp)
 
     def publish_dest(self, force, header):
-        new_header = Header(stamp=header, frame_id='base_link')
-        self.pubPoint.publish(PointStamped(header=new_header, point=point))
-        self.pubVis.publish(Marker(id=0, type=Marker.SPHERE,
-                                   header=new_header,
-                                   pose=Pose(position=point),
-                                   scale=Vector3(0.1, 0.1, 0.1),
-                                   color=ColorRGBA(g=1, a=1)))
+        self.pubPoint.publish(PointStamped(header=header, point=Point(x=force.x*1000, y=force.y*1000)))
+        self.publish_vector(force, header, id=2112, color=ColorRGBA(g=1, a=1))
 
     def publish_vector(self, vect, header, id=0, color=ColorRGBA(g=1, a=1)):
         self.pubVis.publish(Marker(id=id, type=Marker.ARROW,
@@ -105,9 +100,7 @@ class OpeningFinder(object):
             force.x += point_force.x
             force.y += point_force.y
 
-        self.publish_vector(force, new_header, id=2112, color=ColorRGBA(g=1, a=1))
-
-        # self.publish_dest(force, scan.header)
+        self.publish_dest(force, new_header)
 
 
 if __name__ == '__main__':
