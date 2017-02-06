@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+subl #!/usr/bin/env python
 
 #This node drives in a square on I and stops the robot on any other keypress
 import rospy

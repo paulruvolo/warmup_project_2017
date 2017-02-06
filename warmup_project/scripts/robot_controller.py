@@ -28,6 +28,7 @@ class Control_Robot():
         rospy.Subscriber("/clear_path_point",Point,self.process_clear_path)
 
         rospy.on_shutdown(self.stop)
+        thread.start_new_thread(self.getKey,())
 
         # make dictionary that calls functions for teleop
         self.state = {'i':self.forward, ',':self.backward,
@@ -57,33 +58,35 @@ class Control_Robot():
 
     def getKey(self):
         """ Interupt that gets a non interrupting keypress """
-        tty.setraw(sys.stdin.fileno())
-        select.select([sys.stdin], [], [], 0)
-        self.key = sys.stdin.read(1)
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+        while not rospy.is_shutdown():
+            tty.setraw(sys.stdin.fileno())
+            select.select([sys.stdin], [], [], 0)
+            self.key = sys.stdin.read(1)
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+            time.sleep(.05)
 
     def forward(self):
         """
             Sets the velocity to forward onkeypress
         """
-        print('forward')
+        #print('forward\r')
         self.linearVector  = Vector3(x=1.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
 
     def backward(self):
-        print('backward')
+        #print('backward\r')
         """ Sets the velocity to backward """
         self.linearVector  = Vector3(x=-1.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
 
     def leftTurn(self):
-        print('leftTurn')
+        #print('leftTurn\r')
         """ Sets the velocity to turn left """
         self.linearVector  = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=1.0)
 
     def rightTurn(self):
-        print('rightTurn')
+        #print('rightTurn\r')
         """ Sets the velocity to turn right """
         #self.linearVector  = Vector3(x=0.0, y=0.0, z=0.0)
         #self.angularVector = Vector3(x=0.0, y=0.0, z=-1.0)
@@ -92,8 +95,8 @@ class Control_Robot():
 
     def personfollowing(self):
         """Runs personfollowing"""
-        print('personfollowing')
-        while not rospy.is_shutdown():
+        print('personfollowing\r')
+        while not rospy.is_shutdown() and self.key != '\x03' and self.key != 'k':
                 print self.personx
                 print self.persony
                 self.goto_point(self.personx,self.persony)
@@ -101,8 +104,8 @@ class Control_Robot():
 
     def clearPathFollowing(self):
         """Runs personfollowing"""
-        print('personfollowing')
-        while not rospy.is_shutdown():
+        print('clearpathfollowing\r')
+        while not rospy.is_shutdown() and self.key != '\x03' and self.key != 'k':
                 print self.clearx
                 print self.cleary
                 self.goto_point(self.clearx,self.cleary)
@@ -110,29 +113,30 @@ class Control_Robot():
 
     def multistate(self):
         """Personfollows if person is further than half a meter away, otherwise avoids obstacles"""
-        while not rospy.is_shutdown():
+        print('multistate\r')
+        while not rospy.is_shutdown() and self.key != '\x03' and self.key != 'k':
             persondistance = math.sqrt((self.currentx-self.personx)**2 + (self.currenty-self.persony)**2)
             if persondistance <= .5:
                 self.goto_point(self.clearx,self.cleary)
-                print 'avoiding'
+                print 'avoiding\r'
             else:
                 self.goto_point(self.personx,self.persony)
-                print 'following'
+                print 'following\r'
             self.sendMessage()
 
     def stop(self):
         """ Sets the velocity to stop """
-        print('stop')
+        #print('stop\r')
         self.linearVector  = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.sendMessage()
-        print "currentx = " + str(self.currentx)
-        print "currenty = " + str(self.currenty)
-        print "orientation = " + str(self.orientation)
+        #print "currentx = " + str(self.currentx) +'\r'
+        #print "currenty = " + str(self.currenty) +'\r'
+        #print "orientation = " + str(self.orientation) +'\r'
 
     def sendMessage(self):
         """ Publishes the Twist containing the linear and angular vector """
-        print('sendMessage')
+        #print('sendMessage\r')
         self.pub.publish(Twist(linear=self.linearVector, angular=self.angularVector))
 
     def process_person(self,msg):
@@ -201,13 +205,13 @@ class Control_Robot():
         # print "orientation = " + str(self.orientation)
         # print "targetangle = " + str(self.targetangle)
         # print "angledifference = " + str(self.angledifference)
-        print "turnspeed = " + str(self.turnspeed)
-        print "speed = " + str(self.speed)
+        #print "turnspeed = " + str(self.turnspeed)
+        #print "speed = " + str(self.speed)
 
     def run(self):
         
         while self.key != '\x03' and not rospy.is_shutdown():
-            self.getKey()
+            
             if self.key in self.acceptablekeys:
                 #if an acceptable keypress, do the action
                 self.state[self.key].__call__()
