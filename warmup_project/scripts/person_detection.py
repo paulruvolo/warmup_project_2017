@@ -27,6 +27,8 @@ class Person_Detection():
         rospy.Subscriber('/projected_stable_scan', PointCloud, self.laserCallback)
         rospy.Subscriber("/odom",Odometry,self.process_odom)
         self.point_pub = rospy.Publisher('/person_point',Point,queue_size=10)
+        self.marker_pub = rospy.Publisher('/person_marker',Marker,queue_size=10)
+
 
         self.point = Point()
         self.point.x = 0
@@ -41,6 +43,20 @@ class Person_Detection():
         self.currentx = 0.0
         self.currenty = 0.0
         self.orientation = 0.0
+
+        """ Marker Init """
+        self.marker = Marker()
+        self.marker.header.frame_id = "/odom"
+        self.marker.type = self.marker.SPHERE
+        self.marker.action = 0
+        self.marker.scale.x = .3
+        self.marker.scale.y = .3
+        self.marker.scale.z = .3
+        self.marker.color.a = 1.0
+        self.marker.color.g = 1.0
+        self.marker.pose.position.x = self.point.x
+        self.marker.pose.position.y = self.point.y
+        self.marker.pose.position.z = self.point.z
 
 
     def process_odom(self,msg):
@@ -96,21 +112,32 @@ class Person_Detection():
         labels = ms.labels_
         cluster_centers = ms.cluster_centers_
 
-        smallestAngleIndex = 0
+        smallAngles = []
         i = 0
-        smallestAngle = 5
         for targetx, targety in cluster_centers:
             self.targetangle = math.atan2(targety-self.currenty,targetx-self.currentx)
             self.angledifference  = self.angle_diff(self.targetangle,self.orientation)
-            if abs(self.angledifference) < smallestAngle:
-                smallestAngle = abs(self.angledifference)
-                smallestAngleIndex = i
-                # print "angle diff", self.angledifference
-                # print "smallestAngle", smallestAngle
-            i += 1
+            if abs(self.angledifference) < 1:
+                smallAngles.append([targetx, targety])
 
-        self.point.x, self.point.y = cluster_centers[smallestAngleIndex]
+        smallestDistancePt = [0,0]
+        smallestDist = 10
+        for targetx, targety in smallAngles:
+            if np.linalg.norm([targetx-self.currentx, targety-self.currenty]) < smallestDist:
+                smallestDist = np.linalg.norm([targetx-self.currentx, targety-self.currenty])
+                smallestDistancePt = [targetx, targety]
+
+        #
+        # print(smallestDistancePt)
+
+        self.point.x, self.point.y = smallestDistancePt
         self.point_pub.publish(self.point)
+
+        ## update maker position
+        self.marker.pose.position.x = self.point.x
+        self.marker.pose.position.y = self.point.y
+        self.marker.pose.position.z = self.point.z
+        self.marker_pub.publish(self.marker)
 
         # labels_unique = np.unique(labels)
         # n_clusters_ = len(labels_unique)
@@ -130,8 +157,6 @@ class Person_Detection():
         #              markeredgecolor='k', markersize=14)
         # plt.title('Estimated number of clusters: %d' % n_clusters_)
         # plt.show()
-
-
 
     def run(self):
         while not rospy.is_shutdown():

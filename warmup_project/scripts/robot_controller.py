@@ -23,9 +23,9 @@ class Control_Robot():
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sleepy = rospy.Rate(2)
         rospy.Subscriber("/odom",Odometry,self.process_odom)
-        rospy.Subscriber("/personpoint",Point,self.process_person)
+        rospy.Subscriber("/person_point",Point,self.process_person)
 
-        # make dictionary that calls functions for teleop 
+        # make dictionary that calls functions for teleop
         self.state = {'i':self.forward, ',':self.backward,
                       'l':self.rightTurn, 'j':self.leftTurn,
                       'k':self.stop,'n':self.personfollowing}
@@ -41,8 +41,8 @@ class Control_Robot():
         self.currenty = 0.0
         self.orientation = 0.0
         #proportional controller constants
-        self.kturn = .6
-        self.kspeed= .3
+        self.kturn = .85
+        self.kspeed= .1
         #location of person to be followed
         self.personx = 0.0
         self.persony = 0.0
@@ -87,7 +87,9 @@ class Control_Robot():
         """Runs personfollowing"""
         print('personfollowing')
         while not rospy.is_shutdown():
-                self.goto_point(personx,persony)
+                print self.personx
+                print self.persony
+                self.goto_point(self.personx,self.persony)
                 self.sendMessage()
 
     def stop(self):
@@ -116,7 +118,7 @@ class Control_Robot():
                              msg.pose.pose.orientation.z,
                             msg.pose.pose.orientation.w)
         angles = euler_from_quaternion(orientation_tuple)
-        self.currentx = msg.pose.pose.position.x 
+        self.currentx = msg.pose.pose.position.x
         self.currenty = msg.pose.pose.position.y
         self.orientation = angles[2]
 
@@ -152,7 +154,7 @@ class Control_Robot():
             self.turnspeed = 0
         else:
             self.turnspeed = math.tanh(self.kturn*self.angledifference)
-        self.speed = self.targetdistance*self.kspeed/self.angledifference
+        self.speed = math.tanh(self.targetdistance*self.kspeed/self.angledifference)
         if self.speed < 0:
             self.speed = 0
         self.linearVector = Vector3(x=self.speed, y=0.0, z=0.0)
@@ -162,14 +164,14 @@ class Control_Robot():
         # print "orientation = " + str(self.orientation)
         # print "targetangle = " + str(self.targetangle)
         # print "angledifference = " + str(self.angledifference)
-        # print "turnspeed = " + str(self.turnspeed)
-        # print "speed = " + str(self.speed)
+        print "turnspeed = " + str(self.turnspeed)
+        print "speed = " + str(self.speed)
 
     def run(self):
         rospy.on_shutdown(self.stop)
         while self.key != '\x03' and not rospy.is_shutdown():
             self.getKey()
-            if self.key in self.acceptablekeys: 
+            if self.key in self.acceptablekeys:
                 #if an acceptable keypress, do the action
                 self.state[self.key].__call__()
             else:
