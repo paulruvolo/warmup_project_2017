@@ -12,8 +12,6 @@ class ObstacleAvoidance():
     def __init__(self):
         rospy.init_node('obstacle_avoid')
 
-#        self.mark = rospy.Publisher('/visualization_marker', Marker, \
-#                                    queue_size=10)
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, \
                                     self.processScans, queue_size=10)
@@ -66,7 +64,6 @@ class ObstacleAvoidance():
                     self.num_left_obst += 1
                 elif (obst[0] > lower):
                     self.num_right_obst += 1
-            print self.num_left_obst, self.num_right_obst
 
     def act(self):
         twist_msg = Twist()
@@ -80,7 +77,6 @@ class ObstacleAvoidance():
                             twist_msg.angular.z = -.5
                             self.state = "right turn"
                             self.last_turn = "right"
-                            #self.sideways = not self.sideways
                             self.last_time = rospy.get_time()
                             self.ang_off += 90
                             if (self.ang_off >= 360):
@@ -89,7 +85,6 @@ class ObstacleAvoidance():
                             twist_msg.angular.z = .5
                             self.state = "left turn"
                             self.last_turn = "left"
-                            #self.sideways = not self.sideways
                             self.last_time = rospy.get_time()
                             self.ang_off -= 90
                             if (self.ang_off < 0):
@@ -102,7 +97,6 @@ class ObstacleAvoidance():
                         twist_msg.angular.z = -.5
                         self.state = "right turn"
                         self.last_turn = "right"
-                        #self.sideways = not self.sideways
                         self.last_time = rospy.get_time()
                         self.ang_off += 90
                         if (self.ang_off >= 360):
@@ -111,7 +105,6 @@ class ObstacleAvoidance():
                         twist_msg.angular.z = .5
                         self.state = "left turn"
                         self.last_turn = "left"
-                        #self.sideways = not self.sideways
                         self.last_time = rospy.get_time()
                         self.ang_off -= 90
                         if (self.ang_off < 0):
@@ -123,9 +116,6 @@ class ObstacleAvoidance():
                 twist_msg.linear.x = .1
                 self.state = "forward"
                 self.sideways = not self.sideways
-                # self.ang_off += 90
-                # if (self.ang_off >= 360):
-                #             self.ang_off -= 360
             else:
                 twist_msg.angular.z = .5
         elif (self.state == "right turn"):
@@ -133,9 +123,6 @@ class ObstacleAvoidance():
                 twist_msg.linear.x = .1
                 self.state = "forward"
                 self.sideways = not self.sideways
-                # self.ang_off -= 90
-                # if (self.ang_off < 0):
-                #             self.ang_off += 360
             else:
                 twist_msg.angular.z = -.5
 
