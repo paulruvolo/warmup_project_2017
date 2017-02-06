@@ -26,13 +26,14 @@ class Control_Robot():
         rospy.Subscriber("/person_point",Point,self.process_person)
         rospy.Subscriber("/clear_path_point",Point,self.process_clear_path)
 
+        rospy.on_shutdown(self.stop)
 
         # make dictionary that calls functions for teleop
         self.state = {'i':self.forward, ',':self.backward,
                       'l':self.rightTurn, 'j':self.leftTurn,
                       'k':self.stop,'n':self.personfollowing,
-                      'b':self.clearPathFollowing}
-        self.acceptablekeys = ['i','l','k',',','j','n','b']
+                      'b':self.clearPathFollowing,'v':self.multistate}
+        self.acceptablekeys = ['i','l','k',',','j','n','b','v']
         self.linearVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.sendMessage()
@@ -49,7 +50,7 @@ class Control_Robot():
         #location of person to be followed
         self.personx = 0.0
         self.persony = 0.0
-
+        #location of target for obstacle avoidance
         self.clearx = 0.0
         self.cleary = 0.0
 
@@ -63,7 +64,6 @@ class Control_Robot():
     def forward(self):
         """
             Sets the velocity to forward onkeypress
-            Only checking for bump sensors in forward
         """
         print('forward')
         self.linearVector  = Vector3(x=1.0, y=0.0, z=0.0)
@@ -106,6 +106,18 @@ class Control_Robot():
                 print self.cleary
                 self.goto_point(self.clearx,self.cleary)
                 self.sendMessage()
+
+    def multistate(self):
+        """Personfollows if person is further than half a meter away, otherwise avoids obstacles"""
+        while not rospy.is_shutdown():
+            persondistance = math.sqrt((self.currentx-personx)**2 + (self.currenty-persony)**2)
+            if persondistance <= .5:
+                self.goto_point(self.clearx,self.cleary)
+                print 'avoiding'
+            else:
+                self.goto_point(self.personx,self.persony)
+                print 'following'
+            self.sendMessage()
 
     def stop(self):
         """ Sets the velocity to stop """
@@ -167,6 +179,10 @@ class Control_Robot():
 
     def goto_point(self,targetx,targety):
         """Drives to specified point, proportionally controlling turnrate and speed"""
+        #if point is 0,0, make 0.01,0.01 to avoid divide by 0
+        if targetx == 0 and targety == 0:
+            targetx = 0.01
+            targety = 0.01
         self.targetdistance = math.sqrt((self.currentx-targetx)**2 + (self.currenty-targety)**2)
         self.targetangle = math.atan2(targety-self.currenty,targetx-self.currentx)
         self.angledifference  = self.angle_diff(self.targetangle,self.orientation)
@@ -188,7 +204,7 @@ class Control_Robot():
         print "speed = " + str(self.speed)
 
     def run(self):
-        rospy.on_shutdown(self.stop)
+        
         while self.key != '\x03' and not rospy.is_shutdown():
             self.getKey()
             if self.key in self.acceptablekeys:
