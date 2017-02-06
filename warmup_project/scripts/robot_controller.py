@@ -24,12 +24,14 @@ class Control_Robot():
         self.sleepy = rospy.Rate(2)
         rospy.Subscriber("/odom",Odometry,self.process_odom)
         rospy.Subscriber("/person_point",Point,self.process_person)
+        rospy.Subscriber("/clear_path_point",Point,self.process_clear_path)
 
         # make dictionary that calls functions for teleop
         self.state = {'i':self.forward, ',':self.backward,
                       'l':self.rightTurn, 'j':self.leftTurn,
-                      'k':self.stop,'n':self.personfollowing}
-        self.acceptablekeys = ['i','l','k',',','j','n']
+                      'k':self.stop,'n':self.personfollowing,
+                      'b':self.clearPathFollowing}
+        self.acceptablekeys = ['i','l','k',',','j','n','b']
         self.linearVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.angularVector = Vector3(x=0.0, y=0.0, z=0.0)
         self.sendMessage()
@@ -46,6 +48,9 @@ class Control_Robot():
         #location of person to be followed
         self.personx = 0.0
         self.persony = 0.0
+
+        self.clearx = 0.0
+        self.cleary = 0.0
 
     def getKey(self):
         """ Interupt that gets a non interrupting keypress """
@@ -92,6 +97,15 @@ class Control_Robot():
                 self.goto_point(self.personx,self.persony)
                 self.sendMessage()
 
+    def clearPathFollowing(self):
+        """Runs personfollowing"""
+        print('personfollowing')
+        while not rospy.is_shutdown():
+                print self.clearx
+                print self.cleary
+                self.goto_point(self.clearx,self.cleary)
+                self.sendMessage()
+
     def stop(self):
         """ Sets the velocity to stop """
         print('stop')
@@ -111,6 +125,11 @@ class Control_Robot():
         """Starts personfollowing on recieved person"""
         self.personx = msg.x
         self.persony = msg.y
+
+    def process_clear_path(self,msg):
+        """Starts personfollowing on recieved person"""
+        self.clearx = msg.x
+        self.cleary = msg.y
 
     def process_odom(self,msg):
         orientation_tuple = (msg.pose.pose.orientation.x,

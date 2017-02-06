@@ -122,8 +122,6 @@ class Obstacle_Detector():
                       dist * math.sin(self.angledifference)]
             vectors.append(vector)
 
-        print(vectors)
-
         newVector = np.sum(np.asarray(vectors), axis=0)
         newVector = newVector / np.linalg.norm(newVector)
         print newVector
@@ -164,5 +162,5 @@ class Obstacle_Detector():
             self.sleepy.sleep()
 
 
-person_detector = Person_Detection()
-person_detector.run()
+obstacle_detector = Obstacle_Detector()
+obstacle_detector.run()
