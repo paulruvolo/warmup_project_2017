@@ -87,8 +87,6 @@ A key takeaway from this task is that using the correct approach can make a very
 
 ## Person Following
 
-![person_following](images/person_following.jpg?raw=true "Person Follow")
-
 **The problem:**
 
 For this behavior, the Neato must be able to distinguish a human apart from walls and other objects, and then follow the detected human even when new objects enter its field of vision.
@@ -119,8 +117,6 @@ The key takeaway is that one sensor is relatively limiting to the pursuit for th
 
 
 ## Obstacle Avoidance
-
-![obstacle_avoidance](images/obstacle_avoidance.jpg?raw=true "Obstacle Avoidance")
 
 **The problem:**
 
@@ -176,10 +172,6 @@ Our greatest flaw was that changing of states was based solely on whether someth
 
 Steps to improve include using a more robust behavior instead of drive_square or making drive_square a bit smarter such that it knew its orientation and wouldn’t crash into objects after leaving person_follow. At the same time more work could be done to make the detection of feet more robust, such that the Neato can continue to drive squares and detect objects as long as the objects aren’t feet. This could be done using motion detection in the Odom frame, or using a camera and sensor fusion.
 
-<<<<<<< HEAD
 **Key takeaways:**
 
 The key takeaway is to remember that the Neato is not smart unless the programmer makes it so. There were definitely a couple of holes in this module that occurred because we weren’t thinking fully about what the Neato sees and what state transitions should look like. When creating more complex behavior patterns, recognizing how different behaviors interact with each other and taking that into account is a very useful lesson.
-=======
-The key takeaway is to remember that the Neato is not smart unless the programmer made it so. There were definitely a couple of holes in this module that occurred because we weren’t thinking fully about what the Neato sees and what state transitions should look like. When creating more complex behavior patterns, recognizing how different behaviors interact with each other and taking that into account is a very useful tidbit.
->>>>>>> b0e7686b61d5b82ae5af14871a62cdc85ceb3ffb
