@@ -53,7 +53,7 @@ The filtered laser scan returns are visualized in RVIZ as a list of spheres. The
 
 One difficult part of this implementation is tuning the relative weight of repulsion and attraction, combined with the function used to weight the magnitude of the repulsive forces based on distance. This form of implementation is not very good at avoiding obstacles that are directly between the robot and its goal point, since the repulsion and attraction directly cancel each other out.  
 
-![image](screenshot/Sphere\ in\ odom.png)
+![image](screenshot/sphere_in_odom.png)
 
 ## Finite State Control
 We implemented a finite state controller that changes between following a person and spinning in circles. Our person follower reports whether it believes it has detected a person or not, so we used this to change between states. If a person is detected, then the robot follows them, otherwise it spins in circles.
