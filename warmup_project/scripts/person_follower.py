@@ -18,15 +18,16 @@ class FollowPerson(object):
 		self.pub_filtered_points = rospy.Publisher('/filtered_points', Marker, queue_size= 10)
 		self.pub_cluster = rospy.Publisher('/cluster', Marker, queue_size= 10)
 		self.scan_width = 30
-		self.scan_points = np.zeros((1,2)) #np.zeros((self.scan_width*2,2))
-		self.too_far = 4.0 #meters, ignore objects beyond this distance
+		self.scan_points = np.zeros((1,2))
+		self.too_far = 1.0 #meters, ignore objects beyond this distance
 		self.kmeans = None
 		self.person_present = False
 		self.closest_cluster = None
+		self.twist = Twist()
 
 		self.angle_k = 1.5
 		self.distance_k = 0.7
-		self.goal_distance = 1.2
+		self.goal_distance = 0.6
 		self.goal_point = Point()
 		self.distance_error = None
 		self.angle_error = None
@@ -107,11 +108,8 @@ class FollowPerson(object):
 		turn_command = self.angle_error * self.angle_k
 		twist.linear.x = drive_command
 		twist.angular.z = turn_command
-		self.pub_cmd_vel.publish(twist)
-
-	
-		print "Distance error: " + str(self.distance_error) + ", Angle error: " + str(self.angle_error) + ", Drive command: " + str(drive_command) + ", Turn command: " + str(turn_command)
-	
+		self.twist = twist
+		
 	def stop(self):
 		twist = Twist()
 		self.pub_cmd_vel.publish(twist)
@@ -150,10 +148,24 @@ class FollowPerson(object):
 				self.find_closest_cluster()
 				self.show_cluster()
 				self.drive_to_person()
+				self.pub_cmd_vel.publish(self.twist)
+
 			else:
 				self.stop()
 				self.stop_show_cluster()
 			r.sleep()
+
+	def run_finite(self):
+		self.show_points()
+		self.compute_kmeans()
+		if self.person_present:
+			self.find_closest_cluster()
+			self.show_cluster()
+			self.drive_to_person()
+		else:
+			self.twist = Twist()
+			self.stop_show_cluster()
+		return self.twist
 
 
 
@@ -161,5 +173,3 @@ if __name__ == '__main__':
 	node = FollowPerson()
 	node.run()
 	print("Node closed.")
-
-	# identify closest large object

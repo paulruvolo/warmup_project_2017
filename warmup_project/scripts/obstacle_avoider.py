@@ -24,19 +24,18 @@ class AvoidObstacle(object):
 
 		self.obstacle_distance = 1.2
 		self.scan_points = []
-		self.goal_point = PointStamped(point = Point(x=0, y=0), header = Header(frame_id="odom") )
+		self.goal_point = PointStamped(point = Point(x=-100, y=0), header = Header(frame_id="odom") )
 		
-		self.attraction_proportion = 0.8 # how much the robot cares about the goal, relative to its obstacles
-		self.angle_k = 1.0
-		self.linear_k = 0.2
+		self.attraction_proportion = 0.01 # how much the robot cares about the goal, relative to its obstacles
+		self.angle_k = 1
+		self.linear_k = 0.08
 
 		self.propel_force = (0,0) # cartesian, in base_link (x, y)
-		#self.propel_angle_k = 1.0
-		#self.propel_linear_k = 0.5
 		
 		self.total_force = (0,0) # polar, in base_link (phi, rho)
-		#self.total_angle_k = 1.0
-		#self.total_linear_k = 0.01
+
+		self.cart_weighted_total_force = (0,0)
+		self.cart_weighted_propel_force = (0,0)
 
 		self.drive_force = (0,0)
 
@@ -68,21 +67,19 @@ class AvoidObstacle(object):
 		
 		for point in self.scan_points:
 			theta = point[0]
-			r = -0.1 / point[1]
+			r = -0.05 / point[1]**2
 			point_force = self.pol2cart(math.radians(theta),r) # angle, -1/distance
 			#sum the x and y components of the force
 			total_force = (total_force[0] + point_force[0], total_force[1] + point_force[1])
 
-		#print total_force[0], total_force[1]
 		self.total_force = self.cart2pol(total_force[0], total_force[1])
 
 
 	def convert_total_force_to_points(self):
 		start_point = Point(x=0, y=0)
 		end_point = Point()
-		cart_point = self.pol2cart(self.total_force[0], self.total_force[1])
-		end_point.x = cart_point[0]
-		end_point.y = cart_point[1]
+		end_point.x = self.cart_weighted_total_force[0]
+		end_point.y = self.cart_weighted_total_force[1]
 		return [start_point, end_point]
 
 	def show_total_force(self):
@@ -132,8 +129,7 @@ class AvoidObstacle(object):
 		marker_msg = Marker()
 		marker_msg.type = marker_msg.ARROW
 		marker_msg.action = marker_msg.ADD
-		cart_propel_force = self.pol2cart(self.propel_force[0], self.propel_force[1])
-		marker_msg.points = [Point(x=0, y=0), Point(x=cart_propel_force[0], y=cart_propel_force[1])]
+		marker_msg.points = [Point(x=0, y=0), Point(x=self.cart_weighted_propel_force[0], y=self.cart_weighted_propel_force[1])]
 		marker_msg.scale.x = 0.05
 		marker_msg.scale.y = 0.1
 		marker_msg.color.r = 1.0
@@ -177,18 +173,13 @@ class AvoidObstacle(object):
 		weighted_total_force = (self.total_force[0], self.total_force[1] * (1-self.attraction_proportion))
 		weighted_propel_force = (self.propel_force[0], self.propel_force[1] * self.attraction_proportion)
 
-		cart_weighted_total_force = self.pol2cart(weighted_total_force[0], weighted_total_force[1])
-		cart_weighted_propel_force = self.pol2cart(weighted_propel_force[0], weighted_propel_force[1])
+		self.cart_weighted_total_force = self.pol2cart(weighted_total_force[0], weighted_total_force[1])
+		self.cart_weighted_propel_force = self.pol2cart(weighted_propel_force[0], weighted_propel_force[1])
 
-		self.drive_force = self.cart2pol(cart_weighted_total_force[0] + cart_weighted_propel_force[0], cart_weighted_total_force[1] + cart_weighted_propel_force[1])
+		self.drive_force = self.cart2pol(self.cart_weighted_total_force[0] + self.cart_weighted_propel_force[0], self.cart_weighted_total_force[1] + self.cart_weighted_propel_force[1])
 
 		drive_command = self.drive_force[1] * self.linear_k
 		turn_command = self.drive_force[0] * self.angle_k
-
-		print "Drive: " + str(drive_command) + ", Turn: " + str(turn_command)
-
-		#self.drive_command = self.total_force[1] * self.total_linear_k + self.propel_force[0] * self.propel_linear_k
-		#self.turn_command = self.total_force[0] * self.total_angle_k + self.propel_force[1] * self.propel_angle_k
 
 		twist.linear.x = drive_command
 		twist.angular.z = turn_command

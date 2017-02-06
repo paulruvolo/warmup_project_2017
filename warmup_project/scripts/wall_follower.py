@@ -16,8 +16,9 @@ class FollowWall(object):
 		rospy.Subscriber('/scan', LaserScan, self.process_scan)
 		self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 		self.wall_pub = rospy.Publisher('detected_wall', Marker, queue_size=10)
+		self.twist = Twist()
 
-		self.angle_k = 1.5
+		self.angle_k = 1.8
 		self.angle_error = None
 
 		self.l1 = 1.0
@@ -85,7 +86,6 @@ class FollowWall(object):
 		while not rospy.is_shutdown():
 			self.calculate_angle_error()
 			self.publish_wall()
-			#print"L1: " + str(self.l1) + "  L2: " + str(self.l2) + "   angle_error: " + str(self.angle_error)
 			twist = self.find_twist()
 			self.pub.publish(twist)
 			r.sleep()
@@ -93,6 +93,12 @@ class FollowWall(object):
 	def stop(self):
 		twist = Twist()
 		self.pub.publish(twist)
+
+	def drive_finite(self):
+		self.calculate_angle_error()
+		self.publish_wall()
+		twist = self.find_twist()
+		self.twist = twist
 
 if __name__ == '__main__':
 	node = FollowWall()
