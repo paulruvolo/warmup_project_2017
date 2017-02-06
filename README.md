@@ -30,7 +30,15 @@ To detect an existing wall, we read from two separate directions from the LIDAR 
 The major challenges of this part of the project included determining how to calculate the relative angle of the wall based on the distances returned from the LIDAR scanner.
 
 ## Person Following
-coming soon
+Goal: Identify a nearby object likely to be a person, orient toward it, and drive to a specified distance away from it. 
+
+First, the script needs to locate objects within a defined region in front of it. We filter out laser scan detections that are beyond a specified angle, beyond a specified distance in front of the robot, or are zero values. We then use a K-means clustering algorithm from SciKit-Learn, which takes in the filtered points, and returns the location of a specified number of clusters. We assume that the closest cluster to the robot is most likely to be a person, and we assume that if any laser scan detections are located in the region in front of the robot, then a person is present. 
+
+Once we have determined the location of our goal, angular velocity is controlled by the error in orientation found by taking the difference between the orientation of the robot and the direction the goal point is from the robot. Linear velocity (in the x direction of the robot's frame of reference, `base_link`) is controlled by the distance between the goal point and the robot, with an offset so it does not run into the person. 
+
+We found it useful to visualize the filtered points as well as the closest cluster while developing this behavior. These were published as markers to be visualized by RVIZ. The filtered points take the form of a list of spheres, while the "person" cluster takes the form of a spheroid. 
+
+Our only method of differentiating between objects (i.e. walls, tables, garbage cans) and people is the location of clusters. If a wall is in the field of view, and is closer than a person in the field of view, then the robot will approach the wall. We discovered that if the K-means algorithm does not calculate enough clusters, then the person may be averaged with its surrounding objects. For example, the center of the cluster could be between a person and a nearby wall.   
 
 ## Obstacle Avoidance
 coming soon
