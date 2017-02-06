@@ -41,7 +41,19 @@ We found it useful to visualize the filtered points as well as the closest clust
 Our only method of differentiating between objects (i.e. walls, tables, garbage cans) and people is the location of clusters. If a wall is in the field of view, and is closer than a person in the field of view, then the robot will approach the wall. We discovered that if the K-means algorithm does not calculate enough clusters, then the person may be averaged with its surrounding objects. For example, the center of the cluster could be between a person and a nearby wall.   
 
 ## Obstacle Avoidance
-coming soon
+Goal: Navigate toward a goal point while avoiding any obstacles in its path.
+
+First, we use the LIDAR sensor to detect any obstacles within a specified distance from the robot in all directions.  We use the distance of these laser scan points to calculate a repulsive force for each object in its view.  The magnitude of one of these forces is inversely proportional to its object's distance from the robot, as can be seen in the equation below:
+
+`force = - 0.5 / distance^2`
+
+These proportional forces are summed together to create a total repulsive force on the robot. We also determine an attractive force acting on the robot from a goal point specified in the `odom` coordinate frame. These two forces are then weighted by an "attraction proportion", which determines how much the robot cares about its goal relative to nearby obstacles. The weighted forces are then combined to form a final "drive force" acting on the robot. The angular and linear velocities of the robot are then proportionally controlled using the difference between the robot's orientation and the direction and magnitude of the "drive force". 
+
+The filtered laser scan returns are visualized in RVIZ as a list of spheres. The weighted repulsive force, weighed attractive force, and resulting drive force are all visualized as arrows. The goal point is visualized as a red sphere. 
+
+One difficult part of this implementation is tuning the relative weight of repulsion and attraction, combined with the function used to weight the magnitude of the repulsive forces based on distance. This form of implementation is not very good at avoiding obstacles that are directly between the robot and its goal point, since the repulsion and attraction directly cancel each other out.  
 
 ## Finite State Control
-coming soon
+We implemented a finite state controller that changes between following a person and spinning in circles. Our person follower reports whether it believes it has detected a person or not, so we used this to change between states. If a person is detected, then the robot follows them, otherwise it spins in circles.
+
+We modified the structure of our person following script to return a twist instead of publishing it directly. We also removed its initialization of a node since that clashed with the node of the finite state controller.  
