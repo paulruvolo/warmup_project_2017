@@ -53,7 +53,7 @@ class PersonFinder(object):
         points = [Point(x=x, y=y) for x in (minDist, maxDist) for y in (-boxWidth/2, boxWidth/2)]
         self.pubVis.publish(
             Marker(
-                header=Header(frame_id='base_link', stamp=rospy.Time.now()),
+                header=Header(frame_id='base_link', stamp=self.header.stamp),
                 id=1,
                 type=Marker.SPHERE_LIST,
                 scale=Vector3(0.1, 0.1, 0.1),

@@ -2,9 +2,11 @@
 
 import rospy, tf, math
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import PointStamped, Vector3
+from geometry_msgs.msg import PointStamped, Vector3, Pose
+# from visualization_msgs.msg import Marker
+# from std_msgs.msg import ColorRGBA
 
-# from warmup_project.frames import modernizePoint
+# from frames import modernizePoint
 
 rospy.init_node('line_follower')
 
@@ -32,13 +34,23 @@ class PersonFollower(object):
         self.sub = rospy.Subscriber(subTopic, PointStamped, self.on_detect)
         self.point = (0, 0)
         self.lastMessageTime = rospy.Time.from_seconds(0)
+        # self.pubVis = rospy.Publisher('/person_visualisation', Marker, queue_size=10)
+
 
     def on_detect(self, msg):
         """
         :type msg: PointStamped
         """
-        local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=msg.point))
+        local_point = PointStamped(header=msg.header, point=msg.point)
         # local_point = modernizePoint(listener, local_point, 'odom')
+        local_point = listener.transformPoint('base_link', local_point)
+
+        # self.pubVis.publish(Marker(id=3, type=Marker.SPHERE,
+        #                            header=local_point.header,
+        #                            pose=Pose(position=local_point.point),
+        #                            scale=Vector3(0.2, 0.2, 0.2),
+        #                            color=ColorRGBA(b=1, a=.5)))
+
         self.lastMessageTime = local_point.header.stamp
         self.point = (local_point.point.x, local_point.point.y)
 
@@ -61,7 +73,12 @@ class PersonFollower(object):
                 #                           rospy.Time.now(), 'desired_heading', 'base_link')
 
                 angle_error = angle - desired_angle
-                print angle_error
+
+                # if abs(dist_error) > 200:
+                #     # Something is broken, abort!
+                #     continue
+
+                print dist_error, angle_error
 
                 if abs(angle_error) > 0.5:
                     forward_speed = speed / 3.0
