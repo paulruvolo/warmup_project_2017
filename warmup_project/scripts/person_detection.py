@@ -26,6 +26,12 @@ class Person_Detection():
         rospy.init_node('person_detector')
         rospy.Subscriber('/projected_stable_scan', PointCloud, self.laserCallback)
         rospy.Subscriber("/odom",Odometry,self.process_odom)
+        self.point_pub = rospy.Publisher('/person_point',Point,queue_size=10)
+
+        self.point = Point()
+        self.point.x = 0
+        self.point.y = 0
+        self.point.z = 0
 
         self.sleepy = rospy.Rate(5)
 
@@ -35,6 +41,7 @@ class Person_Detection():
         self.currentx = 0.0
         self.currenty = 0.0
         self.orientation = 0.0
+
 
     def process_odom(self,msg):
         orientation_tuple = (msg.pose.pose.orientation.x,
@@ -96,28 +103,33 @@ class Person_Detection():
             self.targetangle = math.atan2(targety-self.currenty,targetx-self.currentx)
             self.angledifference  = self.angle_diff(self.targetangle,self.orientation)
             if abs(self.angledifference) < smallestAngle:
+                smallestAngle = abs(self.angledifference)
                 smallestAngleIndex = i
-                print "angle diff", self.angledifference
+                # print "angle diff", self.angledifference
+                # print "smallestAngle", smallestAngle
             i += 1
 
-        labels_unique = np.unique(labels)
-        n_clusters_ = len(labels_unique)
+        self.point.x, self.point.y = cluster_centers[smallestAngleIndex]
+        self.point_pub.publish(self.point)
 
-
-        print("number of estimated clusters : %d" % n_clusters_)
-
-        plt.figure(1)
-        plt.clf()
-
-        colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-        for k, col in zip(range(n_clusters_), colors):
-            my_members = labels == k
-            cluster_center = cluster_centers[k]
-            plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
-            plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                     markeredgecolor='k', markersize=14)
-        plt.title('Estimated number of clusters: %d' % n_clusters_)
-        plt.show()
+        # labels_unique = np.unique(labels)
+        # n_clusters_ = len(labels_unique)
+        #
+        #
+        # print("number of estimated clusters : %d" % n_clusters_)
+        #
+        # plt.figure(1)
+        # plt.clf()
+        #
+        # colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
+        # for k, col in zip(range(n_clusters_), colors):
+        #     my_members = labels == k
+        #     cluster_center = cluster_centers[k]
+        #     plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
+        #     plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
+        #              markeredgecolor='k', markersize=14)
+        # plt.title('Estimated number of clusters: %d' % n_clusters_)
+        # plt.show()
 
 
 
