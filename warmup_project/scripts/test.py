@@ -30,7 +30,7 @@ class Person_Detection():
         print("laserCallback")
 
         self.now = rospy.Time.now()
-        print(self.now - self.lastCallback)
+        print (self.now - self.lastCallback).to_sec()
 
         self.lastCallback = self.now
 
