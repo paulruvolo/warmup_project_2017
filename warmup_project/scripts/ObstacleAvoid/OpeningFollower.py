@@ -22,7 +22,7 @@ kpDist = rospy.get_param('~kpDist', default=1.5)
 # Radians/sec to turn per radian of angle error
 kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
-subTopic = rospy.get_param('~topic', '/person')
+subTopic = rospy.get_param('~topic', 'person')
 
 timeout = rospy.get_param('~timeout', 2.0)
 
