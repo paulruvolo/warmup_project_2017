@@ -42,8 +42,8 @@ class LineFollower(object):
         """
         :type msg: Marker
         """
-        assert msg.type == Marker.LINE_STRIP
-        assert len(msg.points) == 2
+        if msg.type != Marker.LINE_STRIP or len(msg.points) != 2:
+            return
 
         for i, pt in enumerate(msg.points):
             local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
