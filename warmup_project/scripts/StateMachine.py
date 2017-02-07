@@ -3,7 +3,7 @@
 from enum import Enum
 import rospy
 import tf
-from geometry_msgs.msg import Twist, PoseStamped, Point
+from geometry_msgs.msg import Twist, PoseStamped, Point, Pose
 from neato_node.msg import Bump
 from std_msgs.msg import String, Header
 
@@ -29,6 +29,7 @@ class StateMachine(object):
         self.bumped = False
         self.state = State.PERSON_FOLLOW
         self.lastTransitionTime = rospy.Time()
+        rospy.Subscriber('/bump', Bump, self.bumpCallback)
         self.makeSubscriber(State.PERSON_FOLLOW, 'personfollow')
         self.makeSubscriber(State.WALL_FOLLOW, 'wallfollow')
         self.makeSubscriber(State.OBSTACLE_AVOID, 'obstacleavoid')
@@ -55,7 +56,7 @@ class StateMachine(object):
         elif self.state == State.WALL_FOLLOW:
             if self.bumped:
                 dest = listener.transformPose('odom',
-                                              PoseStamped(header=Header(frame_id='base_link'), position=Point(x=2.0)))
+                                              PoseStamped(header=Header(frame_id='base_link'), pose=Pose(position=Point(x=2.0))))
                 avoid_dest_pub.publish(dest)
                 self.transitionTo(State.OBSTACLE_AVOID)
 
