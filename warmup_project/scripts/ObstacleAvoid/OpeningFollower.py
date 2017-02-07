@@ -30,7 +30,7 @@ timeout = rospy.get_param('~timeout', 2.0)
 class PersonFollower(object):
     def __init__(self):
         super(PersonFollower, self).__init__()
-        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber(subTopic, PointStamped, self.on_detect)
         self.point = (0, 0)
         self.lastMessageTime = rospy.Time.from_seconds(0)

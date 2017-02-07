@@ -11,7 +11,7 @@ rospy.init_node('wall_detect')
 class WallDetect(object):
     def __init__(self):
         self.nthile = 0.1
-        self.pub = rospy.Publisher('/detect', Marker, queue_size=10)
+        self.pub = rospy.Publisher('detect', Marker, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, self.laser_to_cart)
 
     def laser_to_cart(self, scan):

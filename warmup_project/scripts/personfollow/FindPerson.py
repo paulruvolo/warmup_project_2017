@@ -43,8 +43,8 @@ print('Starting')
 class PersonFinder(object):
     def __init__(self):
         super(PersonFinder, self).__init__()
-        self.pubPoint = rospy.Publisher('/person', PointStamped, queue_size=10)
-        self.pubVis = rospy.Publisher('/person_visualisation', Marker, queue_size=10)
+        self.pubPoint = rospy.Publisher('person', PointStamped, queue_size=10)
+        self.pubVis = rospy.Publisher('person_visualisation', Marker, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, self.scan_callback)
         self.header = Header()
         self.publish_box()

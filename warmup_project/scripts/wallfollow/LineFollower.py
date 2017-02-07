@@ -29,12 +29,12 @@ kpDist = rospy.get_param('~kpDist', default=1.5)
 # Radians/sec to turn per radian of angle error
 kpAngle = rospy.get_param('~kpAngle', default=1.0)
 
-subTopic = rospy.get_param('~topic', '/detect')
+subTopic = rospy.get_param('~topic', 'detect')
 
 class LineFollower(object):
     def __init__(self):
         super(LineFollower, self).__init__()
-        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber(subTopic, Marker, self.on_detect)
         self.points = [[0, 0], [0, 0]]
 

@@ -1,0 +1,16 @@
+<launch>
+	<group ns="wallfollow">
+		<node name="WallDetectClass" pkg="warmup_project" type="WallDetectClass.py" output="screen"/>
+		<node name="LineFollower" pkg="warmup_project" type="LineFollower.py" output="screen"/>
+	</group>
+
+	<group ns="personfollow">
+		<node name="FindPerson" pkg="warmup_project" type="FindPerson.py" output="screen"/>
+		<node name="PersonFollower" pkg="warmup_project" type="PersonFollower.py" output="screen"/>
+	</group>
+
+	<group ns="obstacleavoid">
+		<node name="FindOpening" pkg="warmup_project" type="FindOpening.py" output="screen"/>
+		<node name="OpeningFollower" pkg="warmup_project" type="OpeningFollower.py" output="screen"/>
+	</group>
+</launch>
