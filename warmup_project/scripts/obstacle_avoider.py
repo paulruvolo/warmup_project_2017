@@ -25,12 +25,12 @@ class ObstacleAvoidance():
     """
 
     def __init__(self):
+        #Init ROS things
         rospy.init_node('obstacle_avoid')
-
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, \
                                     self.processScans, queue_size=10)
-
+        #Obstacle variables
         self.obstacles = []
         self.num_left_obst = 0
         self.num_right_obst = 0
@@ -43,17 +43,19 @@ class ObstacleAvoidance():
         self.count = 0
 
     def processScans(self, msg):
-    """
-    Analyzes relevant LIDAR data, finds obstacles that are obstructing the
-    Neato and sorts them into left obstacles and right obstacles for later
-    interpretation.
-    """
+        """
+        Analyzes relevant LIDAR data, finds obstacles that are obstructing the
+        Neato and sorts them into left obstacles and right obstacles for later
+        interpretation.
+        """
 
         if (1==1):
+            #Resets the obstacle variables
             self.obstacles = []
             self.num_left_obst = 0
             self.num_right_obst = 0
 
+            #Calculates whether obstacles exist in front of Neato
             for i in range(len(msg.ranges)):
                 angle = i
                 distance = msg.ranges[i]
@@ -68,6 +70,7 @@ class ObstacleAvoidance():
                     else:
                         if (angle > lower and angle < upper):
                             self.obstacles.append((angle, distance))
+            #Classify obstacles into either left of right
             for obst in self.obstacles:
                 if (obst[0] < upper):
                     self.num_left_obst += 1
@@ -75,13 +78,15 @@ class ObstacleAvoidance():
                     self.num_right_obst += 1
 
     def act(self):
-    """
-    Publishes 'twist_msg' motor commands to make the Neato avoid obstacles
-    based on the LIDAR input data and the current state of the Neato. Structure
-    resembles an FSM.
-    """
-
+        """
+        Publishes 'twist_msg' motor commands to make the Neato avoid obstacles
+        based on the LIDAR input data and the current state of the Neato. Structure
+        resembles an FSM.
+        """
+        
         twist_msg = Twist()
+        
+        #State forward - move forward until you encounter an obstacle
         if (self.state == "forward"):
             if (not self.sideways):
                 if (len(self.obstacles) > 0):
@@ -126,6 +131,8 @@ class ObstacleAvoidance():
                             self.ang_off += 360
                 else:
                     twist_msg.linear.x = .1
+                    
+        #State left turn - if more of the obstacle is to the right of the Neato, turn left
         elif (self.state == "left turn"):
             if (rospy.get_time() - self.last_time >= math.pi):
                 twist_msg.linear.x = .1
@@ -133,6 +140,8 @@ class ObstacleAvoidance():
                 self.sideways = not self.sideways
             else:
                 twist_msg.angular.z = .5
+                
+        #State right turn - if more of the obstaacle is to the left of the Neato, turn right
         elif (self.state == "right turn"):
             if (rospy.get_time() - self.last_time >= math.pi):
                 twist_msg.linear.x = .1
@@ -144,6 +153,10 @@ class ObstacleAvoidance():
         self.pub.publish(twist_msg)
 
 if (__name__=="__main__"):
+    """
+    Main method, which initializes the ObstacleAvoidance class and runs it
+    """
+    
     obst_avoid = ObstacleAvoidance()
     r = rospy.Rate(10)
     while (not rospy.is_shutdown()):
