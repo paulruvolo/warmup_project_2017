@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-
 """
 finite_state_controller_py
 Kevin Zhang and Shane Kelly
@@ -19,28 +18,29 @@ from visualization_msgs.msg import Marker
 
 
 class FiniteStateController():
-"""
-Contains all variables that define the shape/size of the square and the
-characteristics of the person following. Has a 'processScans' method that
-looks at LIDAR data for person following and an 'act' method that determines
-the state that the robot should be in and publishes 'twist_msg' motor commands
-based on the current state.
-"""
+    """
+    Contains all variables that define the shape/size of the square and the
+    characteristics of the person following. Has a 'processScans' method that
+    looks at LIDAR data for person following and an 'act' method that determines
+    the state that the robot should be in and publishes 'twist_msg' motor commands
+    based on the current state.
+    """
 
     def __init__(self):
+        #Init ROS things
         rospy.init_node('person_follow')
-
         self.mark = rospy.Publisher('/visualization_marker', Marker, queue_size=10)
-
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('/stable_scan', LaserScan, self.processScans, queue_size=10)
 
+        #drive_square variables
         self.global_state = "drive_square"
         self.local_state = "forward"
         self.forward_dur = 5
         self.turn_dur = math.pi
         self.last_action_time = rospy.get_time()
 
+        #person follow variables
         self.max_dist = 1.25
         self.current_error = None
         self.target_distance = rospy.get_param('~target_distance',.7)
@@ -52,10 +52,10 @@ based on the current state.
         self.angles = range(30)
         self.angles.extend(range(330,360))
         self.centroid = None
-
         self.max_scans = 8
         self.past_centroid = (1, 0)
 
+        #Marker stuff
         self.init_marker()
 
     def init_marker(self):
