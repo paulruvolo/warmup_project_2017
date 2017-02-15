@@ -26,7 +26,9 @@ class WallDetect(object):
                 laser_points.append(Point(x, y, 0.0))
 
         index = int(len(laser_points) * self.nthile)
-        self.publish_line(scan.header, [laser_points[index], laser_points[-index]])
+        print len(laser_points)
+        if len(laser_points) >= 2:
+            self.publish_line(scan.header, [laser_points[index], laser_points[-index-1]])
 
     def publish_line(self, header, line_points):
         marker_message = Marker(id=0, type=Marker.LINE_STRIP,

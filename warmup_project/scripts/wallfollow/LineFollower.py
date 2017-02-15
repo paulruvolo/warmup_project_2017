@@ -5,15 +5,22 @@ Those messages must be of type visualization_msgs/Marker with
 type == LINE_STRIP and two points. These points are interpreted
 as a directed infinite line the robot is intended to follow, with
 constant lateral offset of (by default) 1m.
+
+Note that the direction the robot wants to follow is denoted by the order of the points
+in the incoming message, with the robot always travelling in the direction from the first
+point to the second.
+Similarly, to follow a wall on the left, the offset must be negative.
+
+TODO: Use custom message instead of Marker
+TODO: Prevent angle from wrapping when given very large offsets
 """
 import math
 
-import numpy
 import rospy
 import tf
+from geometry_msgs.msg import PointStamped, Vector3
 from geometry_msgs.msg import Twist
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import PointStamped, Vector3
 
 rospy.init_node('line_follower')
 
@@ -40,16 +47,23 @@ class LineFollower(object):
 
     def on_detect(self, msg):
         """
+        ROS callback for incoming wall detect
+        Simply stores values, does no meaningful processing
+        :param msg: The incomming Marker (must be LINE_STRIP with two points
         :type msg: Marker
         """
-        assert msg.type == Marker.LINE_STRIP
-        assert len(msg.points) == 2
+        if msg.type != Marker.LINE_STRIP or len(msg.points) != 2:
+            return
 
         for i, pt in enumerate(msg.points):
             local_point = listener.transformPoint('base_link', PointStamped(header=msg.header, point=pt))
             self.points[i] = [local_point.point.x, local_point.point.y]
 
     def run(self):
+        """
+        Loops until program ends, determining commands to send to motors
+        :return: None
+        """
         r = rospy.Rate(10)
         while not rospy.is_shutdown():
             r.sleep()
@@ -60,6 +74,7 @@ class LineFollower(object):
             dist = self.get_dist_from_wall()
             angle = self.get_angle_from_wall()
 
+            # Calculate the desired driving angle of the robot given the current distance
             dist_error = dist - goal_dist
             desired_angle = dist_error * kpDist
 
@@ -67,6 +82,7 @@ class LineFollower(object):
                                       tf.transformations.quaternion_from_euler(0, 0, desired_angle),
                                       rospy.Time.now(), 'desired_heading', 'base_link')
 
+            # Calculate the desired turning speed
             angle_error = angle - desired_angle
 
             turn_speed = angle_error * kpAngle
@@ -75,12 +91,11 @@ class LineFollower(object):
 
             self.pub.publish(msg)
 
-            print  dist, angle
+            print dist, angle
 
     def get_dist_from_wall(self):
         """
-        Returns the perpendicular distance of the robot from the wall, in meters.
-        :return:
+        :return: The perpendicular distance of the robot from the wall, in meters.
         """
         # taken from https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
         ps = self.points
@@ -90,7 +105,7 @@ class LineFollower(object):
 
     def get_angle_from_wall(self):
         """
-        Returns the angle from the wall in radians, with positive indicating the robot is going towards the wall (assuming wall to right)
+        :return: The angle from the wall in radians, with positive indicating the robot is going towards the wall (assuming wall to right)
         """
         ps = self.points
         return math.atan2(ps[1][1] - ps[0][1], ps[1][0] - ps[0][0])
