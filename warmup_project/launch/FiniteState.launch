@@ -1,6 +1,6 @@
 <launch>
 	<group ns="wallfollow">
-		<node name="WallDetectClass" pkg="warmup_project" type="WallDetectClass.py" output="screen"/>
+		<node name="WallDetect" pkg="warmup_project" type="WallDetect.py" output="screen"/>
 		<node name="LineFollower" pkg="warmup_project" type="LineFollower.py" output="screen"/>
 	</group>
 
