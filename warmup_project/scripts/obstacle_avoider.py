@@ -1,6 +1,4 @@
 #! /usr/bin/env python
-
-
 """
 obstacle_avoider.py
 Kevin Zhang and Shane Kelly
