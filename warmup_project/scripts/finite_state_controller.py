@@ -1,5 +1,14 @@
 #! /usr/bin/env python
 
+"""
+finite_state_controller_py
+Kevin Zhang and Shane Kelly
+CompRobo 2017
+
+Implements an FSM structure to switch the Neato between two previously defined
+states: driving in a square and person following.
+"""
+
 import math
 import rospy
 import numpy as np
@@ -10,6 +19,13 @@ from visualization_msgs.msg import Marker
 
 
 class FiniteStateController():
+"""
+Contains all variables that define the shape/size of the square and the
+characteristics of the person following. Has a 'processScans' method that
+looks at LIDAR data for person following and an 'act' method that determines
+the state that the robot should be in and publishes 'twist_msg' motor commands
+based on the current state.
+"""
 
     def __init__(self):
         rospy.init_node('person_follow')
@@ -43,6 +59,11 @@ class FiniteStateController():
         self.init_marker()
 
     def init_marker(self):
+    """
+    Creates a basic marker used to visualize the centroid of the person that
+    the Neato is currently following.
+    """
+
         self.marker = Marker()
         self.marker.type = 2
         self.marker.header.frame_id = "base_laser_link"
@@ -55,6 +76,13 @@ class FiniteStateController():
         self.marker.color.b = 1
 
     def processScans(self, msg):
+    """
+    Runs every time a new set of LIDAR data is received. Creates an array of
+    LIDAR points that have been determined to be the legs of a person to
+    follow. This array is defined as the 10 points that are closest to centroid
+    of the past 10 leg scans.
+    """
+
         self.raw_feet_scans = []
         self.filtered_feet_scans = []
         for i in self.angles:
@@ -93,6 +121,11 @@ class FiniteStateController():
         self.mark.publish(self.marker)
 
     def act(self):
+    """
+    Selects the correct state based on the LIDAR input. Publishes 'twist_msg'
+    motor commands based on the state of the Neato.
+    """
+
         twist_msg = Twist()
         
         if (self.global_state == "drive_square"):

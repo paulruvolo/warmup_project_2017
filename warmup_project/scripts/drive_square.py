@@ -1,9 +1,22 @@
 #! /usr/bin/env python
 
+"""
+drive_square.py
+Kevin Zhang and Shane Kelly
+CompRobo 2017
+
+Controls a Neato to drive in a perfect square with side lengths of 1m.
+"""
+
 import rospy
 from geometry_msgs.msg import Twist
 
 class Square():
+"""
+Holds attributes that define the shape and size of the driven square. Also
+contains an 'act' method that gives the robot commands to drive in the
+desired square.
+"""
 
     def __init__(self):
         rospy.init_node('square')
@@ -14,6 +27,10 @@ class Square():
         self.turn_dur = 6.28
 
     def act(self):
+    """
+    Publishes 'twist_msg' motion commands to drive in the desired square. 
+    """
+
         twist_msg = Twist()
         if (self.state == "forward"):
             if (rospy.get_time() - self.last_action_time >= self.forward_dur):

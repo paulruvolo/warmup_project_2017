@@ -1,5 +1,16 @@
 #! /usr/bin/env python
 
+
+"""
+obstacle_avoider.py
+Kevin Zhang and Shane Kelly
+CompRobo 2017
+
+Makes the Neato attempt to move in a single direction. If anything obstructs
+the Neato's path, it will move sideways until the obstruction is gone and then
+resume heading toward its goal.
+"""
+
 import math
 import rospy
 import numpy as np
@@ -8,6 +19,12 @@ from geometry_msgs.msg import Twist, Point
 from visualization_msgs.msg import Marker
 
 class ObstacleAvoidance():
+    """
+    Holds characteristics that define the obstacle avoidance behavior. Has a
+    callback 'processScans' for the LIDAR data that looks to find obstacles and
+    an 'act' method that publishes 'twist_msg' motor commands based on the
+    current state of the robot and current LIDAR data.
+    """
 
     def __init__(self):
         rospy.init_node('obstacle_avoid')
@@ -27,19 +44,13 @@ class ObstacleAvoidance():
         self.ang_off = 0
         self.count = 0
 
-    def init_marker(self):
-        self.marker = Marker()
-        self.marker.type = 2
-        self.marker.header.frame_id = "base_laser_link"
-        self.marker.scale.x = .1
-        self.marker.scale.y = .1
-        self.marker.scale.z = .1
-        self.marker.color.a = 1
-        self.marker.color.r = 0
-        self.marker.color.g = 1
-        self.marker.color.b = 1
-
     def processScans(self, msg):
+    """
+    Analyzes relevant LIDAR data, finds obstacles that are obstructing the
+    Neato and sorts them into left obstacles and right obstacles for later
+    interpretation.
+    """
+
         if (1==1):
             self.obstacles = []
             self.num_left_obst = 0
@@ -66,6 +77,12 @@ class ObstacleAvoidance():
                     self.num_right_obst += 1
 
     def act(self):
+    """
+    Publishes 'twist_msg' motor commands to make the Neato avoid obstacles
+    based on the LIDAR input data and the current state of the Neato. Structure
+    resembles an FSM.
+    """
+
         twist_msg = Twist()
         if (self.state == "forward"):
             if (not self.sideways):
