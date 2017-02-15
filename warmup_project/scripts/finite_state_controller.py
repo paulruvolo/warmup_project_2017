@@ -82,7 +82,7 @@ class FiniteStateController():
     follow. This array is defined as the 10 points that are closest to centroid
     of the past 10 leg scans.
     """
-
+        #This code all came from the person following module, it filters the laser scans for the top 8 shifted mean points
         self.raw_feet_scans = []
         self.filtered_feet_scans = []
         for i in self.angles:
@@ -111,7 +111,7 @@ class FiniteStateController():
             self.centroid = (1, 0)
         self.past_centroid = self.centroid
 
-        #Marker stuff
+        #Marker visualization
         point1 = self.centroid[1] * math.cos(math.radians(self.centroid[0]))
         point2 = self.centroid[1] * math.sin(math.radians(self.centroid[0]))
 
@@ -128,6 +128,7 @@ class FiniteStateController():
 
         twist_msg = Twist()
         
+        #While the nobody is front of the Neato, Neato will drive in a square
         if (self.global_state == "drive_square"):
             if (len(self.filtered_feet_scans) > 0):
                 self.global_state = "person_follow"
@@ -146,6 +147,8 @@ class FiniteStateController():
                         self.last_action_time = rospy.get_time()
                     else:
                         twist_msg.angular.z = .5
+                        
+        #While somebody is front of the Neato, start following them
         elif(self.global_state == "person_follow"):
             if (len(self.filtered_feet_scans) == 0):
                 self.global_state = "drive_square"
@@ -159,6 +162,10 @@ class FiniteStateController():
         self.pub.publish(twist_msg)
 
 if (__name__=="__main__"):
+    """
+    Main method, which initializes the FSM and runs it
+    """
+    
     fsm = FiniteStateController()
     r = rospy.Rate(10)
     while (not rospy.is_shutdown()):
