@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+    This node detects a person within a box in front of the robot
+    using a laser scan and publishes a marker that represents
+    the center of mass of the person
+'''
+
 import rospy
 import tf
 import math
@@ -13,7 +19,10 @@ from std_msgs.msg import ColorRGBA, Header
 
 def laser_to_pointcloud(scan):
     """
-    :type scan: LaserScan
+        Converts the laser scan message
+        cartesian coordinates and returns
+        an array of points
+        :type scan: LaserScan
     """
     points = []
     angle = scan.angle_min
@@ -50,6 +59,11 @@ class PersonFinder(object):
         self.publish_box()
 
     def publish_box(self):
+        '''
+            Publishes a marker containing spheres at the
+            corners of the detecting rectangle in front
+            of the robot
+        '''
         points = [Point(x=x, y=y) for x in (minDist, maxDist) for y in (-boxWidth/2, boxWidth/2)]
         self.pubVis.publish(
             Marker(
@@ -62,6 +76,10 @@ class PersonFinder(object):
             ))
 
     def publish_point(self, point):
+        '''
+            Publishes a point and calls publish_box
+            point: a Point
+        '''
         new_header = Header(stamp=self.header.stamp, frame_id='base_link')
         self.pubPoint.publish(PointStamped(header=new_header, point=point))
         self.pubVis.publish(Marker(id=0, type=Marker.SPHERE,
@@ -73,15 +91,32 @@ class PersonFinder(object):
         self.publish_box()
 
     def filter_points(self, points):
+        '''
+            Filters out points that are not in
+            the sensing rectangle
+            points: an array of Points
+        '''
         points = [p for p in points if (minDist <= p.x <= maxDist and abs(p.y) <= boxWidth / 2)]
         return points
 
     def transform_points(self, points):
+        '''
+            Transforms an array of points to
+            the base_link frame
+            points: an array of Points
+        '''
         return [
             listener.transformPoint('base_link', PointStamped(header=self.header, point=p)).point
             for p in points]
 
     def scan_callback(self, scan):
+        '''
+            ROS callback for incoming laserscan
+            Converts, transforms, and filters the points
+            Publishes a point around the center of mass
+            within the sensing rectangle in front of the robot
+            scan: a laserscan
+        '''
         self.header = scan.header
 
         points = laser_to_pointcloud(scan)
